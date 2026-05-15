@@ -1,0 +1,21 @@
+{
+  "name": "syncshop-server",
+  "version": "2.0.0",
+  "description": "SyncShop — AI-Powered Collaborative Shopping Assistant (Backend)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "@supabase/supabase-js": "^2.105.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0",
+    "ws": "^8.20.1"
+  }
+}
