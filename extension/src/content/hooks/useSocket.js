@@ -186,6 +186,12 @@ export function useSocket() {
     socketRef.current?.emit('request-recommendation');
   }, []);
 
+  const sendCursorUpdate = useCallback((x, y, pageUrl) => {
+    // Note: To avoid react state overhead for high-frequency events, 
+    // we use a direct emit here. We could also expose socketRef.
+    socketRef.current?.emit('cursor-move', { x, y, pageUrl });
+  }, []);
+
   // Disconnect handler (popup'tan gelen mesaj)
   useEffect(() => {
     const listener = (msg) => {
@@ -218,5 +224,6 @@ export function useSocket() {
     requestRecommendation,
     vote,
     sendBrowsingUpdate,
+    sendCursorUpdate,
   };
 }

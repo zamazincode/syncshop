@@ -4,14 +4,16 @@ import { useProductDetector } from './hooks/useProductDetector.js';
 import Sidebar from './components/Sidebar.jsx';
 import Fab from './components/Fab.jsx';
 
+import CursorOverlay from './components/CursorOverlay.jsx';
+
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [addedUrls, setAddedUrls] = useState(new Set());
 
   const {
-    session, connected, userId, userName, code,
+    session, connected, userId, userName, code, socket,
     sendMessage, addProduct, removeProduct, requestAnalysis, requestRecommendation, vote,
-    sendBrowsingUpdate, setSession,
+    sendBrowsingUpdate, sendCursorUpdate, setSession,
   } = useSocket();
 
   const { detectedProduct } = useProductDetector({
@@ -45,6 +47,14 @@ export default function App() {
 
   return (
     <>
+      {connected && (
+        <CursorOverlay 
+          socket={socket} 
+          sendCursorUpdate={sendCursorUpdate} 
+          connected={connected} 
+          session={session} 
+        />
+      )}
       <Fab
         onClick={() => setSidebarOpen((prev) => !prev)}
         detectedProduct={detectedProduct}

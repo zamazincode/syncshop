@@ -118,7 +118,7 @@ export function registerHandlers(io, socket) {
   });
 
   // ═══════════════════════════════════════
-  // BROWSING & SCROLL SYNC
+  // BROWSING, SCROLL & CURSOR SYNC
   // ═══════════════════════════════════════
   socket.on('browsing-update', ({ pageTitle, pageUrl }) => {
     if (!currentRoom || !currentUserId) return;
@@ -131,9 +131,21 @@ export function registerHandlers(io, socket) {
 
   socket.on('scroll-update', ({ scrollPercent, pageUrl }) => {
     if (!currentRoom || !currentUserId) return;
-    io.to(currentRoom).emit('user-scroll', {
+    socket.to(currentRoom).emit('user-scroll', { // Sadece diğerlerine gönder
       userId: currentUserId,
       scrollPercent,
+      pageUrl,
+    });
+  });
+
+  socket.on('cursor-move', ({ x, y, pageUrl }) => {
+    if (!currentRoom || !currentUserId) return;
+    // Broadcast to others in the room
+    socket.to(currentRoom).emit('cursor-update', {
+      userId: currentUserId,
+      userName: currentUserName,
+      x,
+      y,
       pageUrl,
     });
   });
