@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "SyncShop — AI Alışveriş Asistanı",
+  "version": "1.0.0",
+  "description": "Arkadaşlarınla birlikte alışveriş yap, AI ile analiz et, birlikte karar ver.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.trendyol.com/*",
+    "https://www.hepsiburada.com/*",
+    "http://localhost:3001/*",
+    "http://127.0.0.1:3001/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.trendyol.com/*",
+        "https://www.hepsiburada.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["https://www.trendyol.com/*", "https://www.hepsiburada.com/*"]
+    }
+  ]
+}

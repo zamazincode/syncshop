@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/**
+ * Tailwind v4 CSS-first yaklaşımı:
+ * Artık tailwind.config.js YOK. Her şey CSS'te @theme ile yapılır.
+ * Bu dosya tek bir @import ile tüm Tailwind utility'lerini yükler.
+ * Custom renkler/fontlar buraya eklenir.
+ */
+
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-glow: rgba(99, 102, 241, 0.25);
+  --color-accent: #10b981;
+  --color-surface: #F8F7F4;
+  --color-surface-dark: #EEEDEA;
+  --color-text: #1A1A18;
+  --color-text-muted: #6B6B65;
+  --color-border: #E5E3DE;
+}
