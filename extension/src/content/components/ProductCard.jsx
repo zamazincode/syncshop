@@ -13,7 +13,7 @@ import { fetchTrendyolReviews } from '../../utils/reviewFetcher.js';
  * - onVote: Oy callback'i
  * - onAnalyze: AI analiz callback'i
  */
-export default function ProductCard({ product, votes = {}, userId, onVote, onAnalyze }) {
+export default function ProductCard({ product, votes = {}, userId, onVote, onAnalyze, onRemove }) {
   const p = product;
   const a = p.aiAnalysis;
 
@@ -145,6 +145,13 @@ export default function ProductCard({ product, votes = {}, userId, onVote, onAna
         >
           🔗
         </a>
+        <button
+          onClick={() => onRemove(p.id)}
+          className="w-11 bg-card border border-border rounded-xl flex items-center justify-center text-text-muted hover:bg-danger/20 hover:text-danger hover:border-danger transition-all cursor-pointer"
+          title="Ürünü Kaldır"
+        >
+          🗑️
+        </button>
       </div>
     </div>
   );

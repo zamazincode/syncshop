@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase.js';
 // PRODUCT CRUD
 // ═══════════════════════════════════════
 
+export const productVotes = new Map(); // productId -> { userId: { vote: 'up'|'down' } }
+
 export async function addProduct(code, product, userName) {
   const url = (product.productUrl || '').split('?')[0];
 
@@ -53,25 +55,32 @@ export async function updateProductAnalysis(productId, analysis, rawReviews = nu
   return data;
 }
 
+export async function removeProduct(productId) {
+  productVotes.delete(productId);
+  const { error } = await supabase.from('products').delete().eq('id', productId);
+  if (error) {
+    console.error('[Product] Remove error:', error);
+    return false;
+  }
+  return true;
+}
+
 // ═══════════════════════════════════════
 // VOTING
 // ═══════════════════════════════════════
 
 export async function voteProduct(code, productId, userId, voteType) {
-  await supabase.from('votes').upsert(
-    { product_id: productId, user_id: userId, vote: voteType },
-    { onConflict: 'product_id,user_id' }
-  );
+  if (!productVotes.has(productId)) {
+    productVotes.set(productId, {});
+  }
+  const votes = productVotes.get(productId);
 
-  const { data: allVotes } = await supabase
-    .from('votes')
-    .select('*')
-    .eq('product_id', productId);
+  // Toggle: If clicked same vote again, remove it
+  if (votes[userId]?.vote === voteType) {
+    delete votes[userId];
+  } else {
+    votes[userId] = { vote: voteType };
+  }
 
-  const votesObj = {};
-  (allVotes || []).forEach((v) => {
-    votesObj[v.user_id] = { vote: v.vote };
-  });
-
-  return votesObj;
+  return votes;
 }

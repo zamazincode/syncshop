@@ -129,6 +129,16 @@ export function useSocket() {
       });
     });
 
+    socket.on('product-removed', ({ productId }) => {
+      setSession((prev) => {
+        if (!prev) return prev;
+        const products = prev.products.filter((p) => p.id !== productId);
+        const votes = { ...prev.votes };
+        delete votes[productId];
+        return { ...prev, products, votes };
+      });
+    });
+
     socket.on('user-browsing', ({ userId: browsingUserId, page }) => {
       setSession((prev) => {
         if (!prev) return prev;
@@ -168,6 +178,14 @@ export function useSocket() {
     socketRef.current?.emit('browsing-update', { pageTitle, pageUrl });
   }, []);
 
+  const removeProduct = useCallback((productId) => {
+    socketRef.current?.emit('remove-product', { productId });
+  }, []);
+
+  const requestRecommendation = useCallback(() => {
+    socketRef.current?.emit('request-recommendation');
+  }, []);
+
   // Disconnect handler (popup'tan gelen mesaj)
   useEffect(() => {
     const listener = (msg) => {
@@ -195,7 +213,9 @@ export function useSocket() {
     // Actions
     sendMessage,
     addProduct,
+    removeProduct,
     requestAnalysis,
+    requestRecommendation,
     vote,
     sendBrowsingUpdate,
   };

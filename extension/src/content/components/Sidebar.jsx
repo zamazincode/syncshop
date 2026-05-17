@@ -18,10 +18,10 @@ export default function Sidebar({
   isOpen, onClose,
   code, users,
   session, userId, userName,
-  onVote, onAnalyze, onSendMessage,
+  onVote, onAnalyze, onSendMessage, onRemoveProduct, onRequestRecommendation,
   connected,
 }) {
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('chat');
 
   const products = session?.products || [];
   const messages = session?.messages || [];
@@ -29,6 +29,12 @@ export default function Sidebar({
 
   // Okunmamış mesaj sayısı (basit implementasyon)
   const unreadCount = activeTab !== 'chat' && messages.length > 0 ? '•' : '';
+
+  // Switch to chat when AI recommendation starts
+  function handleRequestRecommendation() {
+    setActiveTab('chat');
+    onRequestRecommendation();
+  }
 
   return (
     <div
@@ -88,11 +94,14 @@ export default function Sidebar({
                 userId={userId}
                 onVote={onVote}
                 onAnalyze={onAnalyze}
+                onRemove={onRemoveProduct}
+                onRequestRecommendation={handleRequestRecommendation}
               />
             ) : (
               <ChatPanel
                 messages={messages}
                 userName={userName}
+                users={users}
                 onSend={onSendMessage}
               />
             )}

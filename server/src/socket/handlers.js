@@ -2,7 +2,7 @@ import {
   joinSession, getSession,
   addMessage, updateUserPage, removeUser,
 } from '../services/session.js';
-import { addProduct, voteProduct } from '../services/product.js';
+import { addProduct, removeProduct, voteProduct } from '../services/product.js';
 import { handleChat, runAI } from '../services/ai.js';
 
 export function registerHandlers(io, socket) {
@@ -10,11 +10,19 @@ export function registerHandlers(io, socket) {
   let currentUserId = null;
   let currentUserName = null;
 
+  let disconnectTimer = null;
+
   // ═══════════════════════════════════════
   // JOIN SESSION
   // ═══════════════════════════════════════
   socket.on('join-session', async ({ code, userName, userId }, callback) => {
-    const { session, userId: finalUserId, error } = await joinSession(code, userName, userId);
+    // Cancel pending disconnect (page refresh)
+    if (disconnectTimer) {
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
+    }
+
+    const { session, userId: finalUserId, isNewJoin, error } = await joinSession(code, userName, userId);
     if (error) return callback?.({ error });
 
     currentRoom = code;
@@ -26,6 +34,11 @@ export function registerHandlers(io, socket) {
 
     const fullSession = await getSession(code);
     io.to(currentRoom).emit('user-joined', { users: fullSession.users });
+
+    if (isNewJoin) {
+      const joinMsg = await addMessage(code, `👋 **${userName}** odaya katıldı!`, 'SyncBot', true);
+      io.to(currentRoom).emit('message', joinMsg);
+    }
   });
 
   // ═══════════════════════════════════════
@@ -51,6 +64,17 @@ export function registerHandlers(io, socket) {
     }
   });
 
+  socket.on('request-recommendation', async () => {
+    if (!currentRoom) return;
+    try {
+      const msg = "Koleksiyondaki ürünler arasından size en uygununu seçmem için bana yardımcı olur musunuz? Lütfen şu soruları yanıtlayın:\n\n1. İdeal bütçeniz ne kadar?\n2. Bu ürünü ne amaçla kullanacaksınız?\n3. Kendinize mi yoksa hediye olarak mı alıyorsunuz?\n\n(Bana cevap verirken mesaja **@SyncBot** eklemeyi unutmayın!)";
+      const botMsg = await addMessage(currentRoom, msg, 'SyncBot');
+      io.to(currentRoom).emit('message', botMsg);
+    } catch (err) {
+      console.error('[Socket] request-recommendation error:', err);
+    }
+  });
+
   // ═══════════════════════════════════════
   // PRODUCTS
   // ═══════════════════════════════════════
@@ -66,6 +90,14 @@ export function registerHandlers(io, socket) {
         productUrl: newProduct.product_url,
       };
       io.to(currentRoom).emit('product-added', mapped);
+    }
+  });
+
+  socket.on('remove-product', async ({ productId }) => {
+    if (!currentRoom) return;
+    const ok = await removeProduct(productId);
+    if (ok) {
+      io.to(currentRoom).emit('product-removed', { productId });
     }
   });
 
@@ -107,12 +139,16 @@ export function registerHandlers(io, socket) {
   });
 
   // ═══════════════════════════════════════
-  // DISCONNECT
+  // DISCONNECT (grace period for page refresh)
   // ═══════════════════════════════════════
   socket.on('disconnect', () => {
     if (currentRoom && currentUserId) {
-      removeUser(currentRoom, currentUserId);
-      io.to(currentRoom).emit('user-left', { userId: currentUserId });
+      const room = currentRoom;
+      const uid = currentUserId;
+      disconnectTimer = setTimeout(() => {
+        removeUser(room, uid);
+        io.to(room).emit('user-left', { userId: uid });
+      }, 5000);
     }
   });
 }

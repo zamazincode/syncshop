@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import { env } from './config/env.js';
-import { initGemini } from './lib/gemini.js';
+import { initAI } from './lib/ai-client.js';
 import { createSocketServer } from './socket/index.js';
 import healthRoutes from './routes/health.js';
 import sessionRoutes from './routes/session.js';
@@ -37,7 +37,7 @@ createSocketServer(httpServer);
 // ═══════════════════════════════════════
 // AI INIT
 // ═══════════════════════════════════════
-initGemini();
+initAI();
 
 // ═══════════════════════════════════════
 // START

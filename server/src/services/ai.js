@@ -1,4 +1,4 @@
-import { getModel, getJsonModel, isAIReady } from '../lib/gemini.js';
+import { generateText, generateJSON, isAIReady } from '../lib/ai-client.js';
 import { getSession, addMessage } from './session.js';
 import { updateProductAnalysis } from './product.js';
 
@@ -43,11 +43,7 @@ SADECE aşağıdaki JSON formatında yanıt ver:
   "positivePercent": 90
 }`;
 
-    const model = getJsonModel();
-    if (!model) return null;
-
-    const result = await model.generateContent(prompt);
-    return JSON.parse(result.response.text());
+    return await generateJSON(prompt);
   } catch (e) {
     console.error('[AI] Analysis error:', e.message);
     return null;
@@ -72,9 +68,6 @@ export async function handleChat(message, sessionData) {
       })
       .join('\n');
 
-    const model = getModel();
-    if (!model) return '🤖 **SyncBot:** AI hazır değil.';
-
     const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Sadece aşağıdaki koleksiyonda bulunan ürünler hakkında soruları yanıtla.
 
 KOLEKSİYONDAKİ ÜRÜNLER:
@@ -83,13 +76,13 @@ ${productsContext || 'Henüz ürün yok.'}
 Kullanıcı mesajı: "${message}"
 
 GÖREV:
-1. Ürün karşılaştırması isteniyorsa tablo oluştur.
-2. Fiyat, puan ve oyları baz alarak tavsiye ver.
-3. Kısa, samimi bir ton kullan.
-4. Koleksiyonda olmayan ürünler hakkında bilgi istenirse dürüstçe belirt.`;
+1. Kullanıcı koleksiyondan bir ürün seçmeni istiyorsa; bütçe, kullanım amacı ve kime alınacağı (hediye vb.) gibi kriterlere göre en uygun ürünü seç.
+2. Seçim yaparken DİKKAT ET: Koleksiyonda gruptan en çok "👍" (upvote) almış ürüne her zaman öncelik ver ve neden onu seçtiğini (oy sayısını da belirterek) açıkla.
+3. Ürün karşılaştırması isteniyorsa kısa ve öz bir tablo oluştur.
+4. Fiyat ve performans analizi yap, çok pahalı ve az oy almışsa uyar.
+5. Kısa, samimi ve enerjik bir ton kullan.`;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    return await generateText(prompt);
   } catch (e) {
     console.error('[AI] Chat error:', e.message);
     if (e.message?.includes('429') || e.message?.includes('quota')) {

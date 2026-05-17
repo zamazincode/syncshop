@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { productVotes } from './product.js';
 
 // ═══════════════════════════════════════
 // IN-MEMORY ONLINE USERS (per room)
@@ -27,8 +28,7 @@ export async function createSession(category = 'genel') {
     throw error;
   }
 
-  // Welcome message
-  await addMessage(code, `Merhaba! Ben SyncBot 🛍️\nOturum "${code}" oluşturuldu.`, 'SyncBot', true);
+  await addMessage(code, `🛍️ **SyncShop Oturumu Başladı!**\nOda kodu: **${code}**\n\nTrendyol veya Hepsiburada'da ürün sayfalarına gidin, ürünler otomatik eklenecek.\n💡 Bana soru sormak için **@SyncBot** yazın!`, 'SyncBot', true);
 
   return {
     session: { ...data, users: [], products: [], messages: [] },
@@ -52,22 +52,24 @@ export async function joinSession(code, userName, existingUserId = null) {
   if (!onlineUsers.has(code)) onlineUsers.set(code, []);
   const users = onlineUsers.get(code);
 
-  // Aynı userId ile zaten varsa → sadece online durumunu güncelle
+  let isNewJoin = false;
+
   const existingById = users.find((u) => u.id === userId);
   if (existingById) {
     existingById.online = true;
     existingById.name = userName;
   } else {
-    // Aynı isimle farklı userId varsa → eski kaydı sil (browser yenilendi)
     const existingByName = users.findIndex((u) => u.name === userName);
     if (existingByName !== -1) {
       users.splice(existingByName, 1);
+    } else {
+      isNewJoin = true;
     }
     users.push({ id: userId, name: userName, online: true });
   }
 
   const fullSession = await getSession(code);
-  return { session: fullSession, userId };
+  return { session: fullSession, userId, isNewJoin };
 }
 
 export async function getSession(code) {
@@ -99,16 +101,10 @@ export async function getSession(code) {
     aiAnalysis: p.ai_analysis,
   }));
 
-  // Fetch votes for all products
-  const productIds = products.map((p) => p.id);
-  const { data: votesData } = productIds.length
-    ? await supabase.from('votes').select('*').in('product_id', productIds)
-    : { data: [] };
-
+  // Fetch votes from in-memory map
   const votes = {};
-  (votesData || []).forEach((v) => {
-    if (!votes[v.product_id]) votes[v.product_id] = {};
-    votes[v.product_id][v.user_id] = { vote: v.vote };
+  products.forEach((p) => {
+    votes[p.id] = productVotes.get(p.id) || {};
   });
 
   return {

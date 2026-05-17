@@ -1,42 +1,33 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSocket } from './hooks/useSocket.js';
 import { useProductDetector } from './hooks/useProductDetector.js';
 import Sidebar from './components/Sidebar.jsx';
 import Fab from './components/Fab.jsx';
 
-/**
- * App — Content Script Root Component
- *
- * Bu, sidebar'ın "beyni". Tüm hook'ları burada çağırır,
- * state'i yönetir ve alt component'lere props olarak iletir.
- *
- * React'ta veri akışı TEK YÖNLÜDÜR (unidirectional):
- *   App (state) → Sidebar → ProductList → ProductCard
- *   ProductCard'daki buton tıklaması → callback → App → Socket → Server
- *
- * Bu sayede her component sadece kendi işini bilir.
- */
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [addedUrls, setAddedUrls] = useState(new Set());
 
-  // useSocket: Socket.IO bağlantısı + tüm session state
   const {
     session, connected, userId, userName, code,
-    sendMessage, addProduct, requestAnalysis, vote,
+    sendMessage, addProduct, removeProduct, requestAnalysis, requestRecommendation, vote,
     sendBrowsingUpdate, setSession,
   } = useSocket();
 
-  // useProductDetector: Otomatik ürün algılama
-  useProductDetector({
+  const { detectedProduct } = useProductDetector({
     connected,
-    session,
-    addProduct,
     sendBrowsingUpdate,
   });
 
-  // AI analiz handler: Ürün kartındaki butona tıklayınca
+  const isProductAdded = detectedProduct && addedUrls.has(detectedProduct.productUrl);
+
+  function handleAddProduct() {
+    if (!detectedProduct || !connected) return;
+    addProduct(detectedProduct);
+    setAddedUrls((prev) => new Set(prev).add(detectedProduct.productUrl));
+  }
+
   function handleAnalyze(product, reviews) {
-    // UI'da "analyzing" durumunu göster
     setSession((prev) => {
       if (!prev) return prev;
       const products = prev.products.map((p) =>
@@ -44,14 +35,23 @@ export default function App() {
       );
       return { ...prev, products };
     });
-
-    // Server'a analiz isteği gönder
     requestAnalysis(product, reviews);
+  }
+
+  function handleRequestRecommendation() {
+    requestRecommendation();
+    setSidebarOpen(true);
   }
 
   return (
     <>
-      <Fab onClick={() => setSidebarOpen((prev) => !prev)} />
+      <Fab
+        onClick={() => setSidebarOpen((prev) => !prev)}
+        detectedProduct={detectedProduct}
+        onAddProduct={handleAddProduct}
+        connected={connected}
+        isAdded={isProductAdded}
+      />
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -64,6 +64,8 @@ export default function App() {
         onVote={vote}
         onAnalyze={handleAnalyze}
         onSendMessage={sendMessage}
+        onRemoveProduct={removeProduct}
+        onRequestRecommendation={handleRequestRecommendation}
       />
     </>
   );
