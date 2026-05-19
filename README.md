@@ -43,10 +43,20 @@ Odada bulunan bir kullanıcının anlık olarak hangi sitede, hangi ürünü inc
 
 <img src="docs/assets/teleport.png" alt="SyncShop Teleport" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 
-### 🤖 3. AI Seçim Asistanı & Moderatör
-Grup olarak kararsız kaldığınızda **"AI'dan Seçim Asistanı İste"** butonunu kullanın. 
+### 3. AI Destekli Ürün Analizi & Şeffaf Kaynakça 📊🔍
+Ürünlerin artı ve eksi yönlerini araştırmak için onlarca yorumu, açıklamayı ve içeriği okumak yerine yapay zekanın çıkardığı doğrulanabilir ve atıflı özetleri inceleyin.
+
+- Koleksiyona eklenen ürünler için yapay zeka otomatik olarak derinlemesine analiz gerçekleştirir ve ürüne bir **Güven Skoru** tanımlar.
 <img src="docs/assets/ai_assistant.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 <img src="docs/assets/ai_analysis.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
+- AI, analiz sonucu çıkardığı tüm artı ve eksi maddeleri destekleyen **gerçek kullanıcı yorumlarını (veya ürün açıklamasını) kaynakçalarıyla birlikte** sunarak çıkarımların hangi yorumlardan beslendiğini gösterir.
+<img width="100%" alt="SyncShop Source" src="https://github.com/user-attachments/assets/7d64ab8e-b661-45b5-b443-d79d15e29a76" />
+
+
+### 🤖 4. AI Seçim Asistanı & Moderatör
+Grup olarak kararsız kaldığınızda **"AI'dan Seçim Asistanı İste"** butonunu kullanın. 
+
+<img width="100%" alt="SyncShop Choosing Products" src="https://github.com/user-attachments/assets/77b5c84b-2917-43bf-a55d-ac6f240c628f" />
 - AI, karşılaştırma için seçilen ürünlere göre dinamik olarak belirlenen soruları (kullanım amacı, bütçe, teknik ihtiyaçlar vb.) gruba yöneltir.
 <img width="100%" alt="SyncShop Clarify Questions" src="https://github.com/user-attachments/assets/b9b6bb36-5056-4aca-870c-122ad6ed966a" />
 
@@ -56,10 +66,10 @@ Grup olarak kararsız kaldığınızda **"AI'dan Seçim Asistanı İste"** buton
 <img src="docs/assets/ai_result.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 
 
-### 💬 4. Dahili Sohbet (In-App Chat)
+### 💬 5. Dahili Sohbet (In-App Chat)
 Sayfa değiştirmeden, ekranın köşesindeki cam görünümlü (Glassmorphism) modern panelden arkadaşlarınızla anlık olarak yazışın. Birini etiketlediğinizde (Mention) ona özel renkli bildirimler gider.
 
-### 🔌 5. Akıllı Bağlantı & Zombie Session Koruması
+### 🔌 6. Akıllı Bağlantı & Zombie Session Koruması
 Tarayıcı yanlışlıkla kapandığında veya sayfa yenilendiğinde (F5) "Ayrıldı/Katıldı" mesajlarıyla sohbet kirlenmez. Sunucu, kullanıcıyı otomatik olarak çevrimdışı (offline) moda alır ve 10 dakika boyunca odada kimse aktif olmazsa Supabase üzerinden odayı kalıcı olarak silip temizler.
 
 ---
