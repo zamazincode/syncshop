@@ -234,7 +234,7 @@ export async function generateRecommendationQuestions(products, sessionData) {
 ${productsContext}
 
 GÖREVLERİN:
-Kullanıcının kararını netleştirecek tam 1 adet soru üret. Soru için 4 adet tıklanabilir seçenek ver.
+Kullanıcının kararını netleştirecek tam 3 adet soru üret. Soru için 4 adet tıklanabilir seçenek ver.
 
 SORU KURALLARI:
 1. KESİNLİKLE ürünler hakkında bilgi/olgusal (factual) sorular sorma (Örn: "Hangi ürün daha ucuz?", "Hangi ürünün puanı daha yüksek?" gibi sorular sormak YASAKTIR. Bu veriler sende zaten var!).
