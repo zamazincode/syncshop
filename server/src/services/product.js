@@ -9,6 +9,17 @@ export const productVotes = new Map(); // productId -> { userId: { vote: 'up'|'d
 export async function addProduct(code, product, userName) {
   const url = (product.productUrl || '').split('?')[0];
 
+  // Clean product name from common e-commerce page title suffixes
+  let cleanedName = (product.name || '').trim();
+  cleanedName = cleanedName
+    .replace(/\s*-\s*Trendyol$/gi, '')
+    .replace(/\s*-\s*Hepsiburada$/gi, '')
+    .replace(/\s*\|\s*Hepsiburada$/gi, '')
+    .replace(/\s*-\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*Yorumları$/gi, '')
+    .trim();
+
   // Compress reviews for storage (limit to essential fields)
   const reviews = (product.reviews || []).map(r => ({
     text: (r.text || '').substring(0, 300),
@@ -20,7 +31,7 @@ export async function addProduct(code, product, userName) {
     .from('products')
     .insert([{
       session_code: code,
-      name: product.name,
+      name: cleanedName,
       price: product.price,
       image_url: product.imageUrl,
       product_url: url,

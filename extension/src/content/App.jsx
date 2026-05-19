@@ -36,7 +36,13 @@ export default function App() {
     // Fetch reviews while adding (non-blocking for UI)
     let reviews = [];
     if (detectedProduct.site === 'trendyol') {
-      reviews = await fetchTrendyolReviews(detectedProduct.productUrl, detectedProduct.ratingValue);
+      console.log('[SyncShop] Scraping reviews for:', detectedProduct.productUrl);
+      try {
+        reviews = await fetchTrendyolReviews(detectedProduct.productUrl, detectedProduct.ratingValue);
+        console.log(`[SyncShop] Scraped ${reviews.length} reviews successfully.`);
+      } catch (err) {
+        console.error('[SyncShop] Review scraping error:', err);
+      }
     }
 
     addProduct({ ...detectedProduct, reviews });

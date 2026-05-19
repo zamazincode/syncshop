@@ -69,7 +69,7 @@ export function registerHandlers(io, socket) {
     try {
       console.log(`[Socket] request-recommendation for room ${currentRoom} with products:`, productIds);
       const session = await getSession(currentRoom);
-      
+
       let targetProducts = session.products || [];
       if (productIds && productIds.length > 0) {
         targetProducts = targetProducts.filter(p => productIds.includes(p.id));
@@ -85,7 +85,7 @@ export function registerHandlers(io, socket) {
       const unanalyzed = targetProducts.filter(p => !p.aiAnalysis);
       if (unanalyzed.length > 0) {
         console.log(`[Socket] Auto-analyzing ${unanalyzed.length} products before comparison...`);
-        
+
         await Promise.all(unanalyzed.map(async (product) => {
           const hasReviews = product.raw_reviews || product.rawReviews || product.reviews;
           if (!hasReviews) {
@@ -127,7 +127,7 @@ export function registerHandlers(io, socket) {
     try {
       console.log(`[Socket] submit-recommendation-answers for room ${currentRoom}`);
       const session = await getSession(currentRoom);
-      
+
       let targetProducts = session.products || [];
       if (productIds && productIds.length > 0) {
         targetProducts = targetProducts.filter(p => productIds.includes(p.id));

@@ -59,6 +59,12 @@ export function extractTrendyol() {
   }
   if (!name || name.length < 5 || name.includes('Trendyol')) return null;
 
+  name = name
+    .replace(/\s*-\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*Yorumları$/gi, '')
+    .trim();
+
   // Fiyat: DOM > JSON-LD fallback
   const priceEl = document.querySelector('.prc-dsc, .product-price, .pr-bx-nm-v2');
   let priceStr = priceEl?.textContent || ld?.offers?.price || ld?.offers?.lowPrice || '0';
@@ -97,6 +103,13 @@ export function extractHepsiburada() {
     name = document.querySelector('#product-name, h1.product-name')?.textContent?.trim();
   }
   if (!name || name.length < 5) return null;
+
+  name = name
+    .replace(/\s*-\s*Fiyatı$/gi, '')
+    .replace(/\s*-\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*,\s*Yorumları$/gi, '')
+    .replace(/\s*Fiyatı\s*Yorumları$/gi, '')
+    .trim();
 
   const priceEl = document.querySelector('[data-test-id="price-current-price"], .product-price-container');
   let priceStr = priceEl?.textContent || ld?.offers?.price || ld?.offers?.lowPrice || '0';

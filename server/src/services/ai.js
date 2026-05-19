@@ -21,7 +21,7 @@ function getReviews(product) {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed;
-    } catch {}
+    } catch { }
     // Legacy text format: "[5★ Ekim 2025] yorum text"
     return raw.split('\n').filter(Boolean).map(line => {
       const match = line.match(/^\[(\d)★\s*([^\]]*)\]\s*(.*)/);
@@ -58,6 +58,8 @@ SENİN SÜPER GÜCÜN:
 1. MANİPÜLE YORUM TESPİTİ: Tarih kümelenmesi, dil benzerliği (bot tespiti).
 2. SATICI GÜVENİ: "Sahte ürün", "Barkod okumuyor" gibi kırmızı bayraklar.
 3. GİZLİ GERÇEKLER: Açıklama-yorum çelişkileri.
+
+ÖNEMLİ KURAL: Yanıtındaki tüm alanlar (özet, gizli gerçek, artılar, eksiler vb.) %100 TÜRKÇE olmalıdır. İngilizce terimler (Örn: "gift inside", "packaging", "delivery" gibi) karıştırma. Tamamen doğal Türkçe ifadeler kullan.
 
 SADECE aşağıdaki JSON formatında yanıt ver:
 {
