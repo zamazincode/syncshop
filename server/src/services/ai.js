@@ -3,6 +3,37 @@ import { getSession, addMessage } from './session.js';
 import { updateProductAnalysis } from './product.js';
 
 // ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+
+/**
+ * Normalize raw_reviews from Supabase.
+ * Handles both formats:
+ * - JSON array: [{text, rating, date}, ...]
+ * - Legacy compressed text string: "[5★ Ekim 2025] yorum..."
+ */
+function getReviews(product) {
+  const raw = product.reviews || product.raw_reviews || product.rawReviews;
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    // Try JSON parse first
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    // Legacy text format: "[5★ Ekim 2025] yorum text"
+    return raw.split('\n').filter(Boolean).map(line => {
+      const match = line.match(/^\[(\d)★\s*([^\]]*)\]\s*(.*)/);
+      return match
+        ? { rating: Number(match[1]), date: match[2], text: match[3] }
+        : { rating: 0, date: '', text: line };
+    });
+  }
+  return [];
+}
+
+// ═══════════════════════════════════════
 // PRODUCT ANALYZER
 // ═══════════════════════════════════════
 
@@ -16,7 +47,7 @@ Fiyat: ${product.price}₺
 Genel Puan: ${product.ratingValue || 'Bilinmiyor'} / 5 (Toplam ${product.ratingCount || 'Bilinmiyor'} değerlendirme)
 
 Aşağıdaki kullanıcı yorumları, en kritik örneklerin sıkıştırılmış halidir:
-${(product.reviews || [])
+${getReviews(product)
         .filter((r) => r.text && r.text.split(/\s+/).length > 5)
         .map((r) => `[${r.rating}★ ${r.date?.split(' ').slice(-2).join(' ') || '?'}] ${r.text.substring(0, 150)}`)
         .join('\n')}
@@ -120,7 +151,7 @@ export async function generateRecommendationQuestions(products, sessionData) {
 
         // Include top review excerpts if available
         let reviewBlock = '';
-        const reviews = p.raw_reviews || p.rawReviews || [];
+        const reviews = getReviews(p);
         if (reviews.length > 0) {
           const topReviews = reviews.slice(0, 5).map(r => `    "${(r.text || '').substring(0, 120)}" (⭐${r.rating})`).join('\n');
           reviewBlock = `\n  → Kullanıcı Yorumları (${reviews.length} yorum):\n${topReviews}`;
@@ -186,7 +217,7 @@ export async function generateFinalRecommendation(products, sessionData, answers
         }
 
         let reviewBlock = '';
-        const reviews = p.raw_reviews || p.rawReviews || [];
+        const reviews = getReviews(p);
         if (reviews.length > 0) {
           const topReviews = reviews.slice(0, 5).map(r => `    "${(r.text || '').substring(0, 120)}" (⭐${r.rating})`).join('\n');
           reviewBlock = `\n  → Kullanıcı Yorumları (${reviews.length} yorum):\n${topReviews}`;

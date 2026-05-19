@@ -87,14 +87,13 @@ export function registerHandlers(io, socket) {
         console.log(`[Socket] Auto-analyzing ${unanalyzed.length} products before comparison...`);
         
         await Promise.all(unanalyzed.map(async (product) => {
-          const reviews = product.raw_reviews || product.rawReviews || [];
-          if (reviews.length === 0) {
+          const hasReviews = product.raw_reviews || product.rawReviews || product.reviews;
+          if (!hasReviews) {
             console.log(`[Socket] Skipping analysis for ${product.name} — no reviews`);
             return;
           }
 
-          const productWithReviews = { ...product, reviews };
-          const analysis = await analyzeProduct(productWithReviews);
+          const analysis = await analyzeProduct(product);
 
           if (analysis) {
             product.aiAnalysis = analysis;
