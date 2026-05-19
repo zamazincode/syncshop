@@ -156,43 +156,97 @@ function safeJSONParse(text) {
   if (!text) {
     throw new Error('503 Model returned an empty response');
   }
-  try {
-    const parsed = JSON.parse(text);
-    if (!parsed || typeof parsed !== 'object') {
-      throw new Error('Parsed content is not a valid JSON object');
-    }
-    return parsed;
-  } catch (err) {
-    console.warn('[AI] JSON Parse failed, attempting to clean text...', err.message);
-    let cleaned = String(text).trim();
-    if (cleaned.startsWith('```json')) {
-      cleaned = cleaned.substring(7);
-    } else if (cleaned.startsWith('```')) {
-      cleaned = cleaned.substring(3);
-    }
-    if (cleaned.endsWith('```')) {
-      cleaned = cleaned.substring(0, cleaned.length - 3);
-    }
-    cleaned = cleaned.trim();
 
-    // Repair single-quoted keys: 'key': -> "key":
-    cleaned = cleaned.replace(/'([^']*)'\s*:/g, '"$1":');
-    // Repair single-quoted values: : 'value' -> : "value"
-    cleaned = cleaned.replace(/:\s*'([^']*)'/g, (match, p1) => {
-      const escaped = p1.replace(/"/g, '\\"');
-      return `: "${escaped}"`;
-    });
+  // 1. Extract only the JSON block (from first '{' to last '}')
+  let cleaned = String(text).trim();
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
 
-    try {
-      const parsed2 = JSON.parse(cleaned);
-      if (!parsed2 || typeof parsed2 !== 'object') {
-        throw new Error('Parsed content is not a valid JSON object after cleaning');
+  // 2. Escape literal newlines/control characters inside string values
+  let escaped = '';
+  let inString = false;
+  let quoteChar = null;
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned[i];
+    // Handle escape character
+    if (char === '\\' && inString) {
+      escaped += char;
+      if (i + 1 < cleaned.length) {
+        escaped += cleaned[i + 1];
+        i++;
       }
-      return parsed2;
-    } catch (e) {
-      console.error('[AI] Raw faulty JSON output from model:\n', text);
-      throw e;
+      continue;
     }
+    // Handle quote character
+    if (char === '"' || char === "'") {
+      if (!inString) {
+        inString = true;
+        quoteChar = char;
+      } else if (char === quoteChar) {
+        inString = false;
+        quoteChar = null;
+      }
+    }
+    // Handle newline when inside a string
+    if (inString && (char === '\n' || char === '\r')) {
+      escaped += '\\n';
+    } else {
+      escaped += char;
+    }
+  }
+  cleaned = escaped;
+
+  // 3. Try to parse directly
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
+  } catch (err) {
+    console.warn('[AI] Initial JSON Parse failed, attempting quote repairs...', err.message);
+  }
+
+  // 4. Quote repairs
+  // Normalize mismatched or single-quoted keys: 'key':, "key':, 'key": to "key":
+  cleaned = cleaned.replace(/(["'])(.*?)(["'])\s*:/g, '"$2":');
+
+  // Normalize single-quoted or mismatched values: : 'value', : "value', : 'value" to : "value"
+  cleaned = cleaned.replace(/:\s*['"](.*?)['"]\s*([,}\]])/gs, (match, quoteOpen, val, quoteClose, suffix) => {
+    const safeVal = val.replace(/(?<!\\)"/g, '\\"');
+    return `: "${safeVal}"${suffix}`;
+  });
+
+  // Repair common broken array quotes (e.g. [..., "desc] or [..., 'desc])
+  cleaned = cleaned.replace(/\[\s*(.*?)\s*\]/gs, (match, arrayContent) => {
+    const items = arrayContent.split(',').map(item => {
+      let trimmed = item.trim();
+      // If it starts with quote but doesn't end with quote
+      if ((trimmed.startsWith('"') || trimmed.startsWith("'")) && 
+          !(trimmed.endsWith('"') || trimmed.endsWith("'"))) {
+        trimmed = trimmed + trimmed[0]; // append matching quote
+      }
+      // If it ends with quote but doesn't start with quote
+      else if ((trimmed.endsWith('"') || trimmed.endsWith("'")) && 
+               !(trimmed.startsWith('"') || trimmed.startsWith("'"))) {
+        trimmed = trimmed[trimmed.length - 1] + trimmed; // prepend matching quote
+      }
+      return trimmed;
+    });
+    return `[${items.join(', ')}]`;
+  });
+
+  // Try parsing again after quote repairs
+  try {
+    const parsed2 = JSON.parse(cleaned);
+    if (parsed2 && typeof parsed2 === 'object') {
+      return parsed2;
+    }
+  } catch (e) {
+    console.error('[AI] Raw faulty JSON output from model:\n', text);
+    throw e;
   }
 }
 

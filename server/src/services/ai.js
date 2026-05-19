@@ -72,7 +72,7 @@ SENİN SÜPER GÜCÜN:
 1. Yanıtındaki tüm alanlar %100 TÜRKÇE olmalıdır. İngilizce terimler karıştırma.
 2. Kesinlikle dolaylı, resmi ve uzun akademik cümleler kurma (örn: "Olumlu yorumlar genelde..." gibi gereksiz laf kalabalığı YASAKTIR).
 3. Doğrudan, samimi ve arkadaşça bir ton kullan. 3 saniyede karar verdirecek kadar net ol.
-4. JSON YAZIM KURALI: JSON anahtarları (keys) ve dış sınır tırnakları KESİNLİKLE standart çift tırnak (") ile sarılmalıdır (örn: "summary": "değer"). Ancak, tırnak içerisine yazdığın Türkçe metinlerin KENDİ İÇİNDE kesinlikle çift tırnak (") kullanma, sadece tek tırnak (') kullan (Örn: "summary": "Şarj kablosu 'kırılgan' yapıda" gibi).
+4. JSON YAZIM KURALI: JSON çıktısı geçerli ve standartlara uygun JSON formatında olmalıdır. Tüm anahtarlar ve değerler standart çift tırnak (") ile sarılmalıdır. JSON yapısını bozmamak için metinlerin kendi içinde çift tırnak (") kullanma, sadece tek tırnak (') kullan (Örn: "summary": "Şarj kablosu 'kırılgan' yapıda" gibi).
 5. KAYNAKÇA EŞLEŞTİRME KURALI: Artılar ve Eksiler listesindeki her bir maddeyi destekleyen kaynakları "sources" dizisine ekle.
    - Eğer destekleyen kaynak bir kullanıcı yorumu ise, o yorumun indeks numarasını yaz (Örn: 0, 1, 2).
    - Eğer destekleyen kaynak ürün özellikleri/açıklaması ise, "desc" kelimesini ekle (Örn: "desc").
@@ -246,7 +246,15 @@ SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
 {
   "questions": [
     {
-      "question": "Soru metni?",
+      "question": "Soru 1?",
+      "options": ["Seçenek 1", "Seçenek 2", "Seçenek 3", "Seçenek 4"]
+    },
+    {
+      "question": "Soru 2?",
+      "options": ["Seçenek 1", "Seçenek 2", "Seçenek 3", "Seçenek 4"]
+    },
+    {
+      "question": "Soru 3?",
       "options": ["Seçenek 1", "Seçenek 2", "Seçenek 3", "Seçenek 4"]
     }
   ]
