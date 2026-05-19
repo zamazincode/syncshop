@@ -167,7 +167,13 @@ export async function generateRecommendationQuestions(products, sessionData) {
 ${productsContext}
 
 GÖREVLERİN:
-Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver. Seçenekler bu ürün kategorisine özel ve anlamlı olmalı. Yorumlardan çıkardığın bilgileri sorulara yansıt.
+Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver.
+
+SORU KURALLARI:
+1. KESİNLİKLE ürünler hakkında bilgi/olgusal (factual) sorular sorma (Örn: "Hangi ürün daha ucuz?", "Hangi ürünün puanı daha yüksek?" gibi sorular sormak YASAKTIR. Bu veriler sende zaten var!).
+2. Sorular sadece KULLANICININ kişisel tercihlerine, beklentilerine, kullanım senaryolarına ve bütçe/fiyat önceliklerine odaklanmalıdır.
+3. Örnek doğru sorular: "Bu takviyeden öncelikli beklentiniz nedir?", "Bütçe planlamanızda hangisine öncelik verirsiniz?", "Kullanım sıklığınız ne olacak?" vb.
+4. Seçenekler bu ürün kategorisine özel ve anlamlı olmalı. Yorumlardan çıkardığın bilgileri sorulara yansıt.
 
 SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
 {
