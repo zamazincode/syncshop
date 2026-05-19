@@ -72,7 +72,7 @@ export async function joinSession(code, userName, existingUserId = null) {
 
   // Check if a join message already exists in the session messages database to prevent duplicates (e.g. server restarts)
   const hasJoinMessage = (fullSession?.messages || []).some(
-    (m) => m.from === 'SyncBot' && m.text === `👋 **${userName}** odaya katıldı!`
+    (m) => m.from === 'SyncBot' && m.text.includes(userName) && m.text.includes('odaya katıldı')
   );
   if (hasJoinMessage) {
     isNewJoin = false;

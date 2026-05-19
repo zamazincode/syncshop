@@ -30,6 +30,11 @@ export function useSocket() {
   const [code, setCode] = useState('');
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
+  const userIdRef = useRef(userId);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   // chrome.storage'dan mevcut durumu oku
   useEffect(() => {
@@ -75,7 +80,7 @@ export function useSocket() {
 
     socket.on('connect', () => {
       // Server'a katılım bildir
-      socket.emit('join-session', { code, userName, userId }, (data) => {
+      socket.emit('join-session', { code, userName, userId: userIdRef.current }, (data) => {
         if (data?.session) {
           setSession(data.session);
           if (data.userId) {

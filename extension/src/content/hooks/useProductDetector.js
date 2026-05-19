@@ -4,6 +4,7 @@ import { extractProduct } from '../../utils/extractors.js';
 export function useProductDetector({ connected, sendBrowsingUpdate }) {
   const [detectedProduct, setDetectedProduct] = useState(null);
   const lastUrlRef = useRef('');
+  const lastSentUrlRef = useRef('');
 
   useEffect(() => {
     if (!connected) {
@@ -13,9 +14,13 @@ export function useProductDetector({ connected, sendBrowsingUpdate }) {
 
     const interval = setInterval(() => {
       const product = extractProduct();
+      
+      const currentUrl = product ? product.productUrl : null;
+      const currentTitle = product ? product.name : null;
 
-      if (product) {
-        sendBrowsingUpdate(product.name, product.productUrl);
+      if (lastSentUrlRef.current !== currentUrl) {
+        sendBrowsingUpdate(currentTitle, currentUrl);
+        lastSentUrlRef.current = currentUrl;
       }
 
       if (!product || product.price < 10) {
