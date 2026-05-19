@@ -169,12 +169,6 @@ export function updateUserPage(code, userId, page) {
   if (user) user.currentPage = page;
 }
 
-export function setUserOffline(code, userId) {
-  const users = onlineUsers.get(code) || [];
-  const user = users.find((u) => u.id === userId);
-  if (user) user.online = false;
-}
-
 export function removeUser(code, userId) {
   const users = onlineUsers.get(code) || [];
   const index = users.findIndex((u) => u.id === userId);

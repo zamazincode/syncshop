@@ -63,6 +63,7 @@ export default function ProductCard({
   const myVote = votes[userId]?.vote;
 
   const [isZoomed, setIsZoomed] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   async function handleAnalyze() {
     if (p.aiStatus === 'analyzing') return;
@@ -203,50 +204,76 @@ export default function ProductCard({
         </div>
       )}
 
-      {/* ═══ VOTE ACTIONS ═══ */}
-      <div className="flex gap-2">
-        {!a && p.aiStatus !== 'analyzing' && p.aiStatus !== 'failed' && (
+      {/* ═══ VOTE & REMOVE ACTIONS ═══ */}
+      {showConfirmDelete ? (
+        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-danger/5 border border-danger/20 animate-scale-up w-full">
+          <span className="text-[10px] text-danger font-medium tracking-wide pl-1.5 flex items-center gap-1.5">
+            <AlertTriangle size={12} strokeWidth={1.5} />
+            Emin misiniz?
+          </span>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => {
+                onRemove(p.id);
+                setShowConfirmDelete(false);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-danger text-white text-[10px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-lg uppercase tracking-wider"
+            >
+              Evet, Sil
+            </button>
+            <button
+              onClick={() => setShowConfirmDelete(false)}
+              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/80 text-[10px] font-semibold hover:bg-white/10 transition-all cursor-pointer uppercase tracking-wider"
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          {!a && p.aiStatus !== 'analyzing' && p.aiStatus !== 'failed' && (
+            <button
+              onClick={handleAnalyze}
+              className="flex-[2] py-2 rounded-lg bg-transparent text-white/90 text-[11px] font-medium tracking-wide border border-white/15 hover:bg-white/5 hover:border-white/30 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1"
+            >
+              <Bot size={13} strokeWidth={1.25} /> AI Analiz
+            </button>
+          )}
           <button
-            onClick={handleAnalyze}
-            className="flex-[2] py-2 rounded-lg bg-transparent text-white/90 text-[11px] font-medium tracking-wide border border-white/15 hover:bg-white/5 hover:border-white/30 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1"
+            onClick={() => onVote(p.id, 'up')}
+            className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'up'
+              ? 'bg-white text-black border-transparent'
+              : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
+              }`}
           >
-            <Bot size={13} strokeWidth={1.25} /> AI Analiz
+            <ThumbsUp size={14} strokeWidth={1.25} /> {upCount}
           </button>
-        )}
-        <button
-          onClick={() => onVote(p.id, 'up')}
-          className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'up'
-            ? 'bg-white text-black border-transparent'
-            : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
-            }`}
-        >
-          <ThumbsUp size={14} strokeWidth={1.25} /> {upCount}
-        </button>
-        <button
-          onClick={() => onVote(p.id, 'down')}
-          className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'down'
-            ? 'bg-white text-black border-transparent'
-            : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
-            }`}
-        >
-          <ThumbsDown size={14} strokeWidth={1.25} /> {downCount}
-        </button>
-        <a
-          href={p.productUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/80 no-underline hover:bg-white/5 hover:border-white/30 hover:text-white transition-all"
-        >
-          <ExternalLink size={14} strokeWidth={1.25} />
-        </a>
-        <button
-          onClick={() => onRemove(p.id)}
-          className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-all cursor-pointer"
-          title="Ürünü Kaldır"
-        >
-          <Trash2 size={14} strokeWidth={1.25} />
-        </button>
-      </div>
+          <button
+            onClick={() => onVote(p.id, 'down')}
+            className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'down'
+              ? 'bg-white text-black border-transparent'
+              : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
+              }`}
+          >
+            <ThumbsDown size={14} strokeWidth={1.25} /> {downCount}
+          </button>
+          <a
+            href={p.productUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/80 no-underline hover:bg-white/5 hover:border-white/30 hover:text-white transition-all"
+          >
+            <ExternalLink size={14} strokeWidth={1.25} />
+          </a>
+          <button
+            onClick={() => setShowConfirmDelete(true)}
+            className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-all cursor-pointer"
+            title="Ürünü Kaldır"
+          >
+            <Trash2 size={14} strokeWidth={1.25} />
+          </button>
+        </div>
+      )}
 
       {isZoomed && p.imageUrl && (
         <div
