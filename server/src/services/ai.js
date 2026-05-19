@@ -118,7 +118,15 @@ export async function generateRecommendationQuestions(products, sessionData) {
   → Eksiler: ${(a.cons || []).join(', ')}`;
         }
 
-        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}`;
+        // Include top review excerpts if available
+        let reviewBlock = '';
+        const reviews = p.raw_reviews || p.rawReviews || [];
+        if (reviews.length > 0) {
+          const topReviews = reviews.slice(0, 5).map(r => `    "${(r.text || '').substring(0, 120)}" (⭐${r.rating})`).join('\n');
+          reviewBlock = `\n  → Kullanıcı Yorumları (${reviews.length} yorum):\n${topReviews}`;
+        }
+
+        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}${reviewBlock}`;
       })
       .join('\n\n');
 
@@ -128,12 +136,10 @@ export async function generateRecommendationQuestions(products, sessionData) {
 ${productsContext}
 
 GÖREVLERİN:
-1. Çok kısa (max 2 cümle) bir ön-karşılaştırma özeti yaz. Fiyat, puan ve oy farklarını belirt.
-2. Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver. Seçenekler bu ürün kategorisine özel ve anlamlı olmalı.
+Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver. Seçenekler bu ürün kategorisine özel ve anlamlı olmalı. Yorumlardan çıkardığın bilgileri sorulara yansıt.
 
 SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
 {
-  "summary": "Ön karşılaştırma özeti (max 2 cümle, Türkçe)",
   "questions": [
     {
       "question": "Soru metni?",
@@ -175,7 +181,14 @@ export async function generateFinalRecommendation(products, sessionData, answers
   → Eksiler: ${(a.cons || []).join(', ')}`;
         }
 
-        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}`;
+        let reviewBlock = '';
+        const reviews = p.raw_reviews || p.rawReviews || [];
+        if (reviews.length > 0) {
+          const topReviews = reviews.slice(0, 5).map(r => `    "${(r.text || '').substring(0, 120)}" (⭐${r.rating})`).join('\n');
+          reviewBlock = `\n  → Kullanıcı Yorumları (${reviews.length} yorum):\n${topReviews}`;
+        }
+
+        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}${reviewBlock}`;
       })
       .join('\n\n');
 

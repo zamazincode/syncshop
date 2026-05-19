@@ -3,6 +3,7 @@ import { useSocket } from './hooks/useSocket.js';
 import { useProductDetector } from './hooks/useProductDetector.js';
 import Sidebar from './components/Sidebar.jsx';
 import Fab from './components/Fab.jsx';
+import { fetchTrendyolReviews } from '../utils/reviewFetcher.js';
 
 import CursorOverlay from './components/CursorOverlay.jsx';
 
@@ -29,9 +30,16 @@ export default function App() {
     )
   );
 
-  function handleAddProduct() {
+  async function handleAddProduct() {
     if (!detectedProduct || !connected) return;
-    addProduct(detectedProduct);
+
+    // Fetch reviews while adding (non-blocking for UI)
+    let reviews = [];
+    if (detectedProduct.site === 'trendyol') {
+      reviews = await fetchTrendyolReviews(detectedProduct.productUrl, detectedProduct.ratingValue);
+    }
+
+    addProduct({ ...detectedProduct, reviews });
     setAddedUrls((prev) => new Set(prev).add(detectedProduct.productUrl));
   }
 

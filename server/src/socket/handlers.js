@@ -89,11 +89,7 @@ export function registerHandlers(io, socket) {
         return;
       }
 
-      // Send summary as a chat message
-      const summaryMsg = await addMessage(currentRoom, `🤖 **SyncBot:** ${result.summary}`, 'SyncBot');
-      io.to(currentRoom).emit('message', summaryMsg);
-
-      // Send structured questions to all clients in the room
+      // Send structured questions directly to all clients (no summary message)
       io.to(currentRoom).emit('recommendation-questions', {
         productIds,
         questions: result.questions,

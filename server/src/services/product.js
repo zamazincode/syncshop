@@ -9,6 +9,13 @@ export const productVotes = new Map(); // productId -> { userId: { vote: 'up'|'d
 export async function addProduct(code, product, userName) {
   const url = (product.productUrl || '').split('?')[0];
 
+  // Compress reviews for storage (limit to essential fields)
+  const reviews = (product.reviews || []).map(r => ({
+    text: (r.text || '').substring(0, 300),
+    rating: r.rating,
+    date: r.date,
+  }));
+
   const { data, error } = await supabase
     .from('products')
     .insert([{
@@ -19,6 +26,7 @@ export async function addProduct(code, product, userName) {
       product_url: url,
       site: product.site,
       ai_analysis: product.description ? { description: product.description } : null,
+      raw_reviews: reviews.length > 0 ? reviews : null,
     }])
     .select()
     .single();
@@ -29,7 +37,6 @@ export async function addProduct(code, product, userName) {
   }
 
   // Rating bilgileri DB'de yok, in-memory olarak ekliyoruz
-  // Socket event'iyle frontend'e taşınacak
   data.ratingValue = product.ratingValue || 0;
   data.ratingCount = product.ratingCount || 0;
 
