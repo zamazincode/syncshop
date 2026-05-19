@@ -39,11 +39,11 @@ export default function CursorOverlay({ socket, sendCursorUpdate, connected, ses
   useEffect(() => {
     if (!connected || !sendCursorUpdate) return;
 
-    // Send coordinates as percentages for X to handle different screen widths
+    // Send X relative to the center of the document to handle different screen widths for centered websites
     const handleMouseMove = throttle((e) => {
-      const xPercent = e.pageX / document.documentElement.scrollWidth;
+      const xOffset = e.pageX - (document.documentElement.scrollWidth / 2);
       const y = e.pageY;
-      sendCursorUpdate(xPercent, y, window.location.href);
+      sendCursorUpdate(xOffset, y, window.location.href);
     }, 50); // 20 FPS
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -104,8 +104,8 @@ export default function CursorOverlay({ socket, sendCursorUpdate, connected, ses
 
         const el = cursorElementsRef.current[userId];
         if (el) {
-          // Gerçek pixel x koordinatını hesapla
-          const pixelX = data.x * scrollWidth;
+          // X'i sayfa merkezine göre tekrar hesapla
+          const pixelX = (scrollWidth / 2) + data.x;
           // DOM üzerinden doğrudan manipülasyon (React bypass)
           el.style.transform = `translate(${pixelX}px, ${data.y}px)`;
         }
