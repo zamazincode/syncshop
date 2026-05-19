@@ -5,7 +5,7 @@
  * 'dev' modunda localhost, 'prod' modunda deploy edilmiş URL kullanılır.
  */
 
-const MODE = 'dev'; // 'dev' | 'prod'
+const MODE = 'prod'; // 'dev' | 'prod'
 
 const config = {
   dev: {
@@ -13,8 +13,8 @@ const config = {
     WS_URL: 'http://127.0.0.1:3001',
   },
   prod: {
-    API_URL: 'https://your-server.onrender.com',
-    WS_URL: 'https://your-server.onrender.com',
+    API_URL: 'https://syncshop-xpm7.onrender.com',
+    WS_URL: 'https://syncshop-xpm7.onrender.com',
   },
 };
 
