@@ -17,9 +17,9 @@ Genel Puan: ${product.ratingValue || 'Bilinmiyor'} / 5 (Toplam ${product.ratingC
 
 Aşağıdaki kullanıcı yorumları, en kritik örneklerin sıkıştırılmış halidir:
 ${(product.reviews || [])
-  .filter((r) => r.text && r.text.split(/\s+/).length > 5)
-  .map((r) => `[${r.rating}★ ${r.date?.split(' ').slice(-2).join(' ') || '?'}] ${r.text.substring(0, 150)}`)
-  .join('\n')}
+        .filter((r) => r.text && r.text.split(/\s+/).length > 5)
+        .map((r) => `[${r.rating}★ ${r.date?.split(' ').slice(-2).join(' ') || '?'}] ${r.text.substring(0, 150)}`)
+        .join('\n')}
 
 DİKKAT: Ürünün genel kalitesini ve 'Olumlu' oranını (positivePercent) belirlerken SADECE bu yorumlara değil, yukarıdaki 'Genel Puan'a öncelik ver.
 
@@ -105,7 +105,9 @@ export async function generateRecommendationQuestions(products, sessionData) {
         const votes = sessionData.votes[p.id] || {};
         const ups = Object.values(votes).filter((v) => v.vote === 'up').length;
         const downs = Object.values(votes).filter((v) => v.vote === 'down').length;
-        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}, 👍${ups} 👎${downs})`;
+        const rating = p.ratingValue ? `⭐${p.ratingValue}/5 (${p.ratingCount || '?'} değerlendirme)` : 'Puan yok';
+        const analysis = p.aiAnalysis ? `[AI: %${p.aiAnalysis.trustScore} güven, ${p.aiAnalysis.priceVerdict}]` : '';
+        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs} ${analysis}`;
       })
       .join('\n');
 

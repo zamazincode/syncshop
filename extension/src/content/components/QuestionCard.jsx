@@ -44,7 +44,16 @@ export default function QuestionCard({ quiz, onComplete, onDismiss }) {
 
   function handleCustomSubmit() {
     if (!customInput.trim()) return;
-    handleSelect(customInput.trim());
+    const val = customInput.trim();
+
+    // If user types a number (1-4), select the corresponding option
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 1 && num <= current.options.length) {
+      handleSelect(current.options[num - 1]);
+      return;
+    }
+
+    handleSelect(val);
   }
 
   return (

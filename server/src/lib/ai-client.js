@@ -26,6 +26,32 @@ let groqClient = null;  // OpenAI SDK instance (Groq'a yönlendirilmiş)
 let geminiClient = null; // GoogleGenerativeAI instance
 let isConfigured = false;
 
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+/**
+ * Retry wrapper with exponential backoff.
+ * Retries on 503 (Service Unavailable) and 429 (Rate Limit) errors.
+ */
+async function withRetry(fn) {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err.message || '';
+      const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('overloaded') || msg.includes('high demand');
+
+      if (isRetryable && attempt < MAX_RETRIES) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+        console.warn(`[AI] Attempt ${attempt}/${MAX_RETRIES} failed (${msg.substring(0, 60)}...). Retrying in ${delay}ms...`);
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
@@ -75,22 +101,24 @@ export function isAIReady() {
 export async function generateText(prompt) {
   if (!isConfigured) throw new Error('AI not configured');
 
-  if (provider === 'groq') {
-    const response = await groqClient.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 2048,
-    });
-    return response.choices[0].message.content;
-  } else {
-    const model = geminiClient.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-    });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  }
+  return withRetry(async () => {
+    if (provider === 'groq') {
+      const response = await groqClient.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return response.choices[0].message.content;
+    } else {
+      const model = geminiClient.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+      });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    }
+  });
 }
 
 // ═══════════════════════════════════════
@@ -109,21 +137,23 @@ export async function generateText(prompt) {
 export async function generateJSON(prompt) {
   if (!isConfigured) throw new Error('AI not configured');
 
-  if (provider === 'groq') {
-    const response = await groqClient.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 2048,
-      response_format: { type: 'json_object' }, // Groq JSON mode
-    });
-    return JSON.parse(response.choices[0].message.content);
-  } else {
-    const model = geminiClient.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' },
-    });
-    const result = await model.generateContent(prompt);
-    return JSON.parse(result.response.text());
-  }
+  return withRetry(async () => {
+    if (provider === 'groq') {
+      const response = await groqClient.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' },
+      });
+      return JSON.parse(response.choices[0].message.content);
+    } else {
+      const model = geminiClient.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: 'application/json' },
+      });
+      const result = await model.generateContent(prompt);
+      return JSON.parse(result.response.text());
+    }
+  });
 }
