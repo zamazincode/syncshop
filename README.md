@@ -47,7 +47,8 @@ Odada bulunan bir kullanıcının anlık olarak hangi sitede, hangi ürünü inc
 Grup olarak kararsız kaldığınızda **"AI'dan Seçim Asistanı İste"** butonunu kullanın. 
 <img src="docs/assets/ai_assistant.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 <img src="docs/assets/ai_analysis.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
-- AI, ürünü kime aldığınızı ve bütçenizi analiz eden mini bir anket sunar.
+- AI, karşılaştırma için seçilen ürünlere göre dinamik olarak belirlenen soruları (kullanım amacı, bütçe, teknik ihtiyaçlar vb.) gruba yöneltir.
+- <img width="567" height="743" alt="Screenshot 2026-05-19 at 21 30 11" src="https://github.com/user-attachments/assets/8a7006f9-f955-4a73-8b0d-9987aa6c469a" />
 - Gruptaki tüm kullanıcıların beğeni oylarına (👍/👎), fiyat/performans grafiklerine ve kullanıcı yorumlarına bakarak **en doğru, mantıklı kararı ve gerekçesini** gruba özetler.
 - SyncShop Backend'i Trendyol API'lerine doğrudan bağlanarak ürün değerlendirmelerini çeker ve Gemini modelini besler.
 
