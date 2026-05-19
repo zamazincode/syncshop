@@ -65,8 +65,23 @@ export function useSocket() {
     if (!connected || !code || !userName) {
       // Bağlantı yok → socket'i kapat
       if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
+        if (socketRef.current.connected) {
+          socketRef.current.emit('leave-session', () => {
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+              socketRef.current = null;
+            }
+          });
+          setTimeout(() => {
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+              socketRef.current = null;
+            }
+          }, 500);
+        } else {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
       }
       setSession(null);
       return;
@@ -238,11 +253,7 @@ export function useSocket() {
     const listener = (msg) => {
       if (msg.type === 'ss-disconnect') {
         setConnected(false);
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
-        setSession(null);
+        // Socket kapanma işlemi üstteki useEffect tarafından halledilir
       }
     };
     chrome.runtime.onMessage.addListener(listener);

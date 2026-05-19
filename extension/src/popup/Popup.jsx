@@ -243,6 +243,22 @@ function Popup() {
             </div>
           )}
 
+          {/* Quick Links */}
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={() => window.open('https://www.trendyol.com', '_blank')}
+              className="flex-1 py-2.5 bg-[#F27A1A] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#D96B16] transition-all flex items-center justify-center"
+            >
+              Trendyol
+            </button>
+            <button
+              onClick={() => window.open('https://www.hepsiburada.com', '_blank')}
+              className="flex-1 py-2.5 bg-[#FF6000] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#E55600] transition-all flex items-center justify-center"
+            >
+              Hepsiburada
+            </button>
+          </div>
+
           {/* Disconnect */}
           <button
             onClick={handleDisconnect}

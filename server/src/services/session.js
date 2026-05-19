@@ -13,6 +13,24 @@ const genRoomCode = () => 'SS-' + Math.random().toString(36).substring(2, 6).toU
 // SESSION CRUD
 // ═══════════════════════════════════════
 
+const emptySessionTimers = new Map();
+
+export async function deleteSession(code) {
+  console.log(`[Session] Deleting empty session after 10 mins: ${code}`);
+  onlineUsers.delete(code);
+  productVotes.delete(code);
+  emptySessionTimers.delete(code);
+  
+  const { error } = await supabase
+    .from('sessions')
+    .delete()
+    .eq('code', code);
+    
+  if (error) {
+    console.error(`[Session] Delete error for ${code}:`, error);
+  }
+}
+
 export async function createSession(category = 'genel') {
   const code = genRoomCode();
   console.log(`[Session] Creating: ${code}`);
@@ -51,6 +69,13 @@ export async function joinSession(code, userName, existingUserId = null) {
 
   if (!onlineUsers.has(code)) onlineUsers.set(code, []);
   const users = onlineUsers.get(code);
+
+  // If there was a pending deletion timer for this room, cancel it because someone joined
+  if (emptySessionTimers.has(code)) {
+    clearTimeout(emptySessionTimers.get(code));
+    emptySessionTimers.delete(code);
+    console.log(`[Session] Cancelled deletion timer for ${code} as a user joined.`);
+  }
 
   let isNewJoin = false;
 
@@ -144,6 +169,12 @@ export function updateUserPage(code, userId, page) {
   if (user) user.currentPage = page;
 }
 
+export function setUserOffline(code, userId) {
+  const users = onlineUsers.get(code) || [];
+  const user = users.find((u) => u.id === userId);
+  if (user) user.online = false;
+}
+
 export function removeUser(code, userId) {
   const users = onlineUsers.get(code) || [];
   const index = users.findIndex((u) => u.id === userId);
@@ -160,5 +191,22 @@ export function removeUser(code, userId) {
  * Bir oda hâlâ aktif mi kontrol et (en az 1 online kullanıcı var mı).
  */
 export function isRoomActive(code) {
-  return onlineUsers.has(code) && onlineUsers.get(code).length > 0;
+  const users = onlineUsers.get(code) || [];
+  return users.some(u => u.online);
+}
+
+/**
+ * Oda boşaldığında 10 dakikalık silme sayacını başlatır.
+ */
+export function checkEmptySession(code) {
+  if (!isRoomActive(code)) {
+    if (emptySessionTimers.has(code)) {
+      clearTimeout(emptySessionTimers.get(code));
+    }
+    console.log(`[Session] Room ${code} is empty. Starting 10-minute deletion timer...`);
+    const timer = setTimeout(() => {
+      deleteSession(code);
+    }, 10 * 60 * 1000); // 10 minutes
+    emptySessionTimers.set(code, timer);
+  }
 }

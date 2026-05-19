@@ -1,6 +1,6 @@
 import {
   joinSession, getSession,
-  addMessage, updateUserPage, removeUser,
+  addMessage, updateUserPage, removeUser, checkEmptySession, setUserOffline
 } from '../services/session.js';
 import { addProduct, removeProduct, voteProduct, updateProductAnalysis, mapProductDbToFrontend } from '../services/product.js';
 import { handleChat, runAI, analyzeProduct, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
@@ -255,12 +255,45 @@ export function registerHandlers(io, socket) {
   });
 
   // ═══════════════════════════════════════
+  // MANUAL LEAVE (Disconnect button)
+  // ═══════════════════════════════════════
+  socket.on('leave-session', async (callback) => {
+    if (currentRoom && currentUserId) {
+      const room = currentRoom;
+      const uid = currentUserId;
+      const userName = currentUserName;
+      const key = `${room}:${uid}`;
+
+      if (disconnectTimers.has(key)) {
+        clearTimeout(disconnectTimers.get(key));
+        disconnectTimers.delete(key);
+      }
+
+      activeQuizzes.delete(key);
+      removeUser(room, uid);
+      io.to(room).emit('user-left', { userId: uid });
+      
+      const leaveMsg = await addMessage(room, `👋 **${userName}** ayrıldı.`, 'SyncBot', true);
+      io.to(room).emit('message', leaveMsg);
+
+      checkEmptySession(room);
+      console.log(`[Socket] User ${uid} (${userName}) manually left session ${room}`);
+      
+      currentRoom = null;
+      currentUserId = null;
+      currentUserName = null;
+    }
+    if (typeof callback === 'function') callback();
+  });
+
+  // ═══════════════════════════════════════
   // DISCONNECT (grace period for page refresh)
   // ═══════════════════════════════════════
   socket.on('disconnect', () => {
     if (currentRoom && currentUserId) {
       const room = currentRoom;
       const uid = currentUserId;
+      const userName = currentUserName;
       const key = `${room}:${uid}`;
 
       // Clear any existing disconnect timer for this user connection
@@ -268,14 +301,21 @@ export function registerHandlers(io, socket) {
         clearTimeout(disconnectTimers.get(key));
       }
 
-      const timer = setTimeout(() => {
-        removeUser(room, uid);
-        io.to(room).emit('user-left', { userId: uid });
+      const timer = setTimeout(async () => {
+        setUserOffline(room, uid);
+        const fullSession = await getSession(room);
+        io.to(room).emit('user-joined', { users: fullSession.users });
+
+        const leaveMsg = await addMessage(room, `👋 **${userName}** ayrıldı.`, 'SyncBot', true);
+        io.to(room).emit('message', leaveMsg);
+
         disconnectTimers.delete(key);
 
         // Clean up active quiz for the departed user
         activeQuizzes.delete(key);
-        console.log(`[Socket] User ${uid} left session ${room}, cleared active quiz.`);
+        console.log(`[Socket] User ${uid} went offline in session ${room}`);
+        
+        checkEmptySession(room);
       }, 5000);
 
       disconnectTimers.set(key, timer);
