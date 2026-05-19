@@ -47,11 +47,10 @@ export default function ProductList({ products, votes, userId, onVote, onAnalyze
           <button
             disabled={products.length < 2}
             onClick={() => setCompareMode(true)}
-            className={`w-full py-2.5 rounded-lg text-[10px] font-medium tracking-widest transition-all flex items-center justify-center gap-2 border ${
-              products.length >= 2
+            className={`w-full py-2.5 rounded-lg text-[10px] font-medium tracking-widest transition-all flex items-center justify-center gap-2 border ${products.length >= 2
                 ? 'bg-white text-black cursor-pointer hover:bg-gray-200 border-transparent'
                 : 'bg-transparent border-white/10 text-white/40 cursor-not-allowed'
-            }`}
+              }`}
           >
             <Bot size={14} strokeWidth={1.25} />
             <span>{products.length < 2 ? 'KARŞILAŞTIRMAK İÇİN EN AZ 2 ÜRÜN GEREK' : 'ÜRÜNLERİ KARŞILAŞTIR'}</span>
@@ -79,7 +78,9 @@ export default function ProductList({ products, votes, userId, onVote, onAnalyze
         <div className="absolute bottom-4 left-4 right-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 shadow-[0_16px_32px_-8px_rgba(0,0,0,0.7)] z-20 flex items-center justify-between animate-scale-up">
           <div className="flex flex-col gap-0.5 min-w-0">
             <span className="text-[8px] font-medium tracking-widest text-white/30 uppercase">SEÇİLEN ÜRÜNLER</span>
-            <span className="text-[11px] font-semibold text-white/80 truncate">{selectedIds.length} ürün işaretlendi</span>
+            <span className="text-[11px] font-semibold text-white/80 truncate">
+              {selectedIds.length === 0 ? 'Hiç ürün seçilmedi' : `${selectedIds.length} ürün işaretlendi`}
+            </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -91,14 +92,21 @@ export default function ProductList({ products, votes, userId, onVote, onAnalyze
             <button
               disabled={selectedIds.length < 2}
               onClick={handleConfirmCompare}
-              className={`px-4 py-1.5 rounded-lg text-[10px] font-medium tracking-wider transition-all flex items-center gap-1.5 uppercase ${
-                selectedIds.length >= 2
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider transition-all flex items-center gap-1.5 uppercase ${selectedIds.length >= 2
                   ? 'bg-white text-black cursor-pointer hover:bg-gray-200 shadow-lg'
-                  : 'bg-white/5 border border-white/5 text-white/20 cursor-not-allowed'
-              }`}
+                  : selectedIds.length === 1
+                    ? 'bg-white/5 border border-white/5 text-white/40 cursor-not-allowed'
+                    : 'bg-white/5 border border-white/5 text-white/20 cursor-not-allowed'
+                }`}
             >
               <Bot size={12} strokeWidth={1.5} />
-              AI Sor
+              <span>
+                {selectedIds.length === 0
+                  ? 'En Az 2 Seçin'
+                  : selectedIds.length === 1
+                    ? '1 Ürün Daha'
+                    : 'AI Karşılaştır'}
+              </span>
             </button>
           </div>
         </div>
