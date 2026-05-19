@@ -8,7 +8,8 @@
     "storage"
   ],
   "host_permissions": [
-    "https://www.trendyol.com/*",
+    "https://*.trendyol.com/*",
+    "https://apigw.trendyol.com/*",
     "https://www.hepsiburada.com/*",
     "http://localhost:3001/*",
     "http://127.0.0.1:3001/*"
