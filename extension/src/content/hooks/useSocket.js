@@ -23,6 +23,7 @@ import { WS_URL } from '../../utils/config.js';
 export function useSocket() {
   const socketRef = useRef(null);
   const [session, setSession] = useState(null);
+  const [activeQuiz, setActiveQuiz] = useState(null);
   const [connected, setConnected] = useState(false);
   const [code, setCode] = useState('');
   const [userName, setUserName] = useState('');
@@ -149,6 +150,10 @@ export function useSocket() {
       });
     });
 
+    socket.on('recommendation-questions', ({ productIds, questions }) => {
+      setActiveQuiz({ productIds, questions });
+    });
+
     // Cleanup: component unmount olduğunda socket'i kapat
     return () => {
       socket.disconnect();
@@ -186,6 +191,10 @@ export function useSocket() {
     socketRef.current?.emit('request-recommendation', { productIds });
   }, []);
 
+  const submitRecommendationAnswers = useCallback((productIds, answers) => {
+    socketRef.current?.emit('submit-recommendation-answers', { productIds, answers });
+  }, []);
+
   const sendCursorUpdate = useCallback((x, y, pageUrl) => {
     // Note: To avoid react state overhead for high-frequency events, 
     // we use a direct emit here. We could also expose socketRef.
@@ -216,12 +225,15 @@ export function useSocket() {
     userId,
     userName,
     code,
+    activeQuiz,
+    setActiveQuiz,
     // Actions
     sendMessage,
     addProduct,
     removeProduct,
     requestAnalysis,
     requestRecommendation,
+    submitRecommendationAnswers,
     vote,
     sendBrowsingUpdate,
     sendCursorUpdate,

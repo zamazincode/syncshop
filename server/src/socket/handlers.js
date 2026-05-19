@@ -3,7 +3,7 @@ import {
   addMessage, updateUserPage, removeUser,
 } from '../services/session.js';
 import { addProduct, removeProduct, voteProduct } from '../services/product.js';
-import { handleChat, runAI, generateRecommendationQuestions } from '../services/ai.js';
+import { handleChat, runAI, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
 
 export function registerHandlers(io, socket) {
   let currentRoom = null;
@@ -81,11 +81,44 @@ export function registerHandlers(io, socket) {
         return;
       }
       
-      const recommendationResponse = await generateRecommendationQuestions(targetProducts, session);
-      const botMsg = await addMessage(currentRoom, recommendationResponse, 'SyncBot');
-      io.to(currentRoom).emit('message', botMsg);
+      const result = await generateRecommendationQuestions(targetProducts, session);
+
+      if (!result || !result.questions) {
+        const botMsg = await addMessage(currentRoom, "🤖 **SyncBot:** Sorular oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.", 'SyncBot');
+        io.to(currentRoom).emit('message', botMsg);
+        return;
+      }
+
+      // Send summary as a chat message
+      const summaryMsg = await addMessage(currentRoom, `🤖 **SyncBot:** ${result.summary}`, 'SyncBot');
+      io.to(currentRoom).emit('message', summaryMsg);
+
+      // Send structured questions to all clients in the room
+      io.to(currentRoom).emit('recommendation-questions', {
+        productIds,
+        questions: result.questions,
+      });
     } catch (err) {
       console.error('[Socket] request-recommendation error:', err);
+    }
+  });
+
+  socket.on('submit-recommendation-answers', async ({ productIds, answers } = {}) => {
+    if (!currentRoom) return;
+    try {
+      console.log(`[Socket] submit-recommendation-answers for room ${currentRoom}`);
+      const session = await getSession(currentRoom);
+      
+      let targetProducts = session.products || [];
+      if (productIds && productIds.length > 0) {
+        targetProducts = targetProducts.filter(p => productIds.includes(p.id));
+      }
+
+      const finalResponse = await generateFinalRecommendation(targetProducts, session, answers);
+      const botMsg = await addMessage(currentRoom, finalResponse, 'SyncBot');
+      io.to(currentRoom).emit('message', botMsg);
+    } catch (err) {
+      console.error('[Socket] submit-recommendation-answers error:', err);
     }
   });
 

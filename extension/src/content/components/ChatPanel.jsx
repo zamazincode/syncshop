@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Bot, Send } from 'lucide-react';
+import QuestionCard from './QuestionCard.jsx';
 
-export default function ChatPanel({ messages, userName, users = [], onSend }) {
+export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss }) {
   const [text, setText] = useState('');
   const [mentions, setMentions] = useState([]);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -120,6 +121,15 @@ export default function ChatPanel({ messages, userName, users = [], onSend }) {
         })}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Question Card */}
+      {activeQuiz && (
+        <QuestionCard
+          quiz={activeQuiz}
+          onComplete={onQuizComplete}
+          onDismiss={onQuizDismiss}
+        />
+      )}
 
       {/* Input Area */}
       <div className="relative p-4 bg-black/10 border-t border-white/5 shrink-0">

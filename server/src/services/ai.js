@@ -93,38 +93,90 @@ GÖREV:
 }
 
 // ═══════════════════════════════════════
-// RECOMMENDATION QUESTIONS GENERATOR
+// RECOMMENDATION — STRUCTURED QUESTIONS
 // ═══════════════════════════════════════
 
 export async function generateRecommendationQuestions(products, sessionData) {
+  if (!isAIReady()) return null;
+
+  try {
+    const productsContext = products
+      .map((p) => {
+        const votes = sessionData.votes[p.id] || {};
+        const ups = Object.values(votes).filter((v) => v.vote === 'up').length;
+        const downs = Object.values(votes).filter((v) => v.vote === 'down').length;
+        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}, 👍${ups} 👎${downs})`;
+      })
+      .join('\n');
+
+    const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Kullanıcılar aşağıdaki ürünleri karşılaştırmak istiyor.
+
+ÜRÜNLER:
+${productsContext}
+
+GÖREVLERİN:
+1. Çok kısa (max 2 cümle) bir ön-karşılaştırma özeti yaz. Fiyat, puan ve oy farklarını belirt.
+2. Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver. Seçenekler bu ürün kategorisine özel ve anlamlı olmalı.
+
+SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
+{
+  "summary": "Ön karşılaştırma özeti (max 2 cümle, Türkçe)",
+  "questions": [
+    {
+      "question": "Soru metni?",
+      "options": ["Seçenek 1", "Seçenek 2", "Seçenek 3", "Seçenek 4"]
+    }
+  ]
+}`;
+
+    return await generateJSON(prompt);
+  } catch (e) {
+    console.error('[AI] generateRecommendationQuestions error:', e.message);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════
+// RECOMMENDATION — FINAL DECISION
+// ═══════════════════════════════════════
+
+export async function generateFinalRecommendation(products, sessionData, answers) {
   if (!isAIReady()) return '🤖 **SyncBot:** AI yapılandırılmamış.';
 
   try {
     const productsContext = products
       .map((p) => {
         const votes = sessionData.votes[p.id] || {};
-        const voteStr = Object.values(votes)
-          .map((v) => `${v.vote === 'up' ? '👍' : '👎'}`)
-          .join(', ');
-        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}) [Oylar: ${voteStr || 'henüz yok'}]`;
+        const ups = Object.values(votes).filter((v) => v.vote === 'up').length;
+        const downs = Object.values(votes).filter((v) => v.vote === 'down').length;
+        const analysis = p.aiAnalysis ? `Güven: %${p.aiAnalysis.trustScore}, ${p.aiAnalysis.priceVerdict}` : '';
+        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}, 👍${ups} 👎${downs}) ${analysis}`;
       })
       .join('\n');
 
-    const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Gruptaki kullanıcılar aşağıdaki ürünleri karşılaştırmak ve aralarından seçim yapmak istiyor.
-    
+    const answersContext = answers
+      .map((a, i) => `Soru ${i + 1}: ${a.question} → Cevap: ${a.answer}`)
+      .join('\n');
+
+    const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Kullanıcılar ürün karşılaştırması yapıyor ve tercih sorularını cevapladı.
+
 ÜRÜNLER:
 ${productsContext}
 
+KULLANICI TERCİHLERİ:
+${answersContext}
+
 GÖREVLERİN:
-1. Bu ürünleri çok kısa bir özet halinde karşılaştır (Örn: "Seçtiğiniz ürünler arasında X en yüksek oya sahip, Y ise en ucuz alternatif.").
-2. Kararlarını daha da netleştirebilmek için bu ürünlerin ortak özelliklerine/kategorilerine özel 3 adet hedef soru sor (Örn: ayakkabı ise kullanım yeri, kulaklık ise gürültü engelleme önceliği vb.).
-3. Kullanıcıların soruları cevaplarken @SyncBot etiketlemelerini hatırlat.
-4. Yanıtı kısa, enerjik, samimi ve Türkçe yaz. Markdown formatını kullan.`;
+1. Kullanıcının cevaplarına göre en uygun ürünü seç ve neden onu seçtiğini kısa açıkla.
+2. Grup oylarını (👍/👎) da dikkate al — çok oy almış ürüne öncelik ver.
+3. İkinci en iyi alternatifi de belirt.
+4. Kısa, samimi, enerjik ve Türkçe yaz. Markdown formatını kullan. Emoji kullan ama abartma.
+5. Max 150 kelime.`;
 
     return await generateText(prompt);
   } catch (e) {
-    console.error('[AI] generateRecommendationQuestions error:', e.message);
-    return '🤖 **SyncBot:** Karşılaştırma soruları hazırlanırken bir hata oluştu.';
+    console.error('[AI] generateFinalRecommendation error:', e.message);
+    return '🤖 **SyncBot:** Final tavsiye oluşturulurken bir hata oluştu.';
   }
 }
 
