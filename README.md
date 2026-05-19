@@ -50,6 +50,7 @@ Odada bulunan bir kullanıcının anlık olarak hangi sitede, hangi ürünü inc
 <img src="docs/assets/ai_assistant.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 <img src="docs/assets/ai_analysis.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 - AI, analiz sonucu çıkardığı tüm artı ve eksi maddeleri destekleyen gerçek kullanıcı yorumlarını (veya ürün açıklamasını) kaynakçalarıyla birlikte sunarak çıkarımların hangi yorumlardan beslendiğini gösterir.
+- 
 <img width="100%" alt="SyncShop Source" src="https://github.com/user-attachments/assets/7d64ab8e-b661-45b5-b443-d79d15e29a76" />
 
 
