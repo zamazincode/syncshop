@@ -19,7 +19,7 @@ export const env = {
   PORT: process.env.PORT || 3001,
 
   // AI Config
-  AI_PROVIDER: process.env.AI_PROVIDER || 'groq', // 'groq' | 'gemini'
+  AI_PROVIDER: process.env.AI_PROVIDER || 'gemini', // 'groq' | 'gemini'
   AI_API_KEY: process.env.AI_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '', // Gemini backward compat
 

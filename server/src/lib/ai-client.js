@@ -50,7 +50,7 @@ export function initAI() {
     } else {
       // Gemini: Google SDK kullan
       geminiClient = new GoogleGenerativeAI(apiKey);
-      console.log('[AI] Gemini initialized (gemini-2.0-flash)');
+      console.log('[AI] Gemini initialized (gemini-2.5-flash)');
     }
     isConfigured = true;
   } catch (e) {
@@ -85,7 +85,7 @@ export async function generateText(prompt) {
     return response.choices[0].message.content;
   } else {
     const model = geminiClient.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
     });
     const result = await model.generateContent(prompt);
@@ -120,7 +120,7 @@ export async function generateJSON(prompt) {
     return JSON.parse(response.choices[0].message.content);
   } else {
     const model = geminiClient.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { responseMimeType: 'application/json' },
     });
     const result = await model.generateContent(prompt);

@@ -93,6 +93,42 @@ GÖREV:
 }
 
 // ═══════════════════════════════════════
+// RECOMMENDATION QUESTIONS GENERATOR
+// ═══════════════════════════════════════
+
+export async function generateRecommendationQuestions(products, sessionData) {
+  if (!isAIReady()) return '🤖 **SyncBot:** AI yapılandırılmamış.';
+
+  try {
+    const productsContext = products
+      .map((p) => {
+        const votes = sessionData.votes[p.id] || {};
+        const voteStr = Object.values(votes)
+          .map((v) => `${v.vote === 'up' ? '👍' : '👎'}`)
+          .join(', ');
+        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}) [Oylar: ${voteStr || 'henüz yok'}]`;
+      })
+      .join('\n');
+
+    const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Gruptaki kullanıcılar aşağıdaki ürünleri karşılaştırmak ve aralarından seçim yapmak istiyor.
+    
+ÜRÜNLER:
+${productsContext}
+
+GÖREVLERİN:
+1. Bu ürünleri çok kısa bir özet halinde karşılaştır (Örn: "Seçtiğiniz ürünler arasında X en yüksek oya sahip, Y ise en ucuz alternatif.").
+2. Kararlarını daha da netleştirebilmek için bu ürünlerin ortak özelliklerine/kategorilerine özel 3 adet hedef soru sor (Örn: ayakkabı ise kullanım yeri, kulaklık ise gürültü engelleme önceliği vb.).
+3. Kullanıcıların soruları cevaplarken @SyncBot etiketlemelerini hatırlat.
+4. Yanıtı kısa, enerjik, samimi ve Türkçe yaz. Markdown formatını kullan.`;
+
+    return await generateText(prompt);
+  } catch (e) {
+    console.error('[AI] generateRecommendationQuestions error:', e.message);
+    return '🤖 **SyncBot:** Karşılaştırma soruları hazırlanırken bir hata oluştu.';
+  }
+}
+
+// ═══════════════════════════════════════
 // AI ORCHESTRATOR (runAI)
 // ═══════════════════════════════════════
 

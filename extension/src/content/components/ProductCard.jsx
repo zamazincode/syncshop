@@ -5,7 +5,10 @@ import { Package, Star, Bot, XCircle, RefreshCcw, Sparkles, ShieldCheck, Search,
 /**
  * ProductCard — Tek bir ürün kartı
  */
-export default function ProductCard({ product, votes = {}, userId, onVote, onAnalyze, onRemove }) {
+export default function ProductCard({
+  product, votes = {}, userId, onVote, onAnalyze, onRemove,
+  compareMode = false, isSelected = false, onToggleSelect
+}) {
   const p = product;
   const a = p.aiAnalysis;
 
@@ -27,22 +30,34 @@ export default function ProductCard({ product, votes = {}, userId, onVote, onAna
   }
 
   return (
-    <div className="bg-transparent border border-white/5 rounded-2xl p-4 transition-all hover:bg-white/[0.02] hover:border-white/10">
+    <div className={`bg-transparent border rounded-2xl p-4 transition-all hover:bg-white/[0.02] ${
+      compareMode && isSelected ? 'border-white/30 bg-white/[0.01]' : 'border-white/5 hover:border-white/10'
+    }`}>
       {/* ═══ HEADER: Image + Info ═══ */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4 items-center">
+        {compareMode && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            className="w-3.5 h-3.5 rounded border-white/20 bg-transparent text-white focus:ring-0 focus:ring-offset-0 cursor-pointer accent-white shrink-0"
+          />
+        )}
         {p.imageUrl ? (
           <img
             src={p.imageUrl}
             alt={p.name}
-            onClick={() => setIsZoomed(true)}
-            className="w-16 h-16 rounded-xl object-cover bg-black/20 shrink-0 border border-white/5 cursor-zoom-in hover:opacity-85 transition-opacity"
+            onClick={compareMode ? onToggleSelect : () => setIsZoomed(true)}
+            className={`w-16 h-16 rounded-xl object-cover bg-black/20 shrink-0 border border-white/5 transition-opacity ${
+              compareMode ? 'cursor-pointer hover:opacity-90' : 'cursor-zoom-in hover:opacity-85'
+            }`}
             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
           />
         ) : null}
         <div className="w-16 h-16 rounded-xl bg-black/20 shrink-0 flex items-center justify-center text-text-muted border border-white/5" style={{ display: p.imageUrl ? 'none' : 'flex' }}>
           <Package size={24} strokeWidth={1} />
         </div>
-        <div className="min-w-0 flex flex-col justify-center">
+        <div className="min-w-0 flex flex-col justify-center flex-1" onClick={compareMode ? onToggleSelect : undefined} style={{ cursor: compareMode ? 'pointer' : 'default' }}>
           <h3 className="text-xs font-light leading-snug line-clamp-1 text-white/60 tracking-wide" title={p.name}>{p.name}</h3>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-[15px] font-semibold text-white tracking-wide">

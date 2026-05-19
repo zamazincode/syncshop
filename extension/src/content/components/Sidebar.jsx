@@ -24,9 +24,9 @@ export default function Sidebar({
 
   const unreadCount = activeTab !== 'chat' && messages.length > 0 ? '•' : '';
 
-  function handleRequestRecommendation() {
+  function handleRequestRecommendation(productIds) {
     setActiveTab('chat');
-    onRequestRecommendation();
+    onRequestRecommendation(productIds);
   }
 
   return (

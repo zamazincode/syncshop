@@ -3,7 +3,7 @@ import {
   addMessage, updateUserPage, removeUser,
 } from '../services/session.js';
 import { addProduct, removeProduct, voteProduct } from '../services/product.js';
-import { handleChat, runAI } from '../services/ai.js';
+import { handleChat, runAI, generateRecommendationQuestions } from '../services/ai.js';
 
 export function registerHandlers(io, socket) {
   let currentRoom = null;
@@ -64,11 +64,25 @@ export function registerHandlers(io, socket) {
     }
   });
 
-  socket.on('request-recommendation', async () => {
+  socket.on('request-recommendation', async ({ productIds } = {}) => {
     if (!currentRoom) return;
     try {
-      const msg = "Koleksiyondaki ürünler arasından size en uygununu seçmem için bana yardımcı olur musunuz? Lütfen şu soruları yanıtlayın:\n\n1. İdeal bütçeniz ne kadar?\n2. Bu ürünü ne amaçla kullanacaksınız?\n3. Kendinize mi yoksa hediye olarak mı alıyorsunuz?\n\n(Bana cevap verirken mesaja **@SyncBot** eklemeyi unutmayın!)";
-      const botMsg = await addMessage(currentRoom, msg, 'SyncBot');
+      console.log(`[Socket] request-recommendation for room ${currentRoom} with products:`, productIds);
+      const session = await getSession(currentRoom);
+      
+      let targetProducts = session.products || [];
+      if (productIds && productIds.length > 0) {
+        targetProducts = targetProducts.filter(p => productIds.includes(p.id));
+      }
+
+      if (targetProducts.length === 0) {
+        const botMsg = await addMessage(currentRoom, "🤖 **SyncBot:** Karşılaştırmak için geçerli ürünler seçilmedi.", 'SyncBot');
+        io.to(currentRoom).emit('message', botMsg);
+        return;
+      }
+      
+      const recommendationResponse = await generateRecommendationQuestions(targetProducts, session);
+      const botMsg = await addMessage(currentRoom, recommendationResponse, 'SyncBot');
       io.to(currentRoom).emit('message', botMsg);
     } catch (err) {
       console.error('[Socket] request-recommendation error:', err);

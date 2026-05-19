@@ -182,8 +182,8 @@ export function useSocket() {
     socketRef.current?.emit('remove-product', { productId });
   }, []);
 
-  const requestRecommendation = useCallback(() => {
-    socketRef.current?.emit('request-recommendation');
+  const requestRecommendation = useCallback((productIds) => {
+    socketRef.current?.emit('request-recommendation', { productIds });
   }, []);
 
   const sendCursorUpdate = useCallback((x, y, pageUrl) => {

@@ -45,8 +45,8 @@ export default function App() {
     requestAnalysis(product, reviews);
   }
 
-  function handleRequestRecommendation() {
-    requestRecommendation();
+  function handleRequestRecommendation(productIds) {
+    requestRecommendation(productIds);
     setSidebarOpen(true);
   }
 
