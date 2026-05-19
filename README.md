@@ -1,86 +1,120 @@
-# 🛍️ SyncShop — Realtime AI-Powered Collaborative Shopping Assistant
+<div align="center">
+  <img src="docs/assets/banner.png" alt="SyncShop Banner" width="100%" />
+  
+  #  SyncShop
+  
+  **Realtime AI-Powered Collaborative Shopping Assistant**
+  
+  *BTK Hackathon 2026 için geliştirilmiştir.*
+
+  <img src="https://skillicons.dev/icons?i=react,js,tailwind,nodejs,express,supabase,bun,git,github,vscode" />
+
+
+</div>
+
+<br />
 
 > **Alışverişi link çöplüğünden kurtarın; birlikte arayın, AI ile ortak karar verin.**
 
-SyncShop, arkadaşlarınız veya ailenizle birlikte internetten alışveriş yapma sürecini (hediye seçimi, ev alışverişi vb.) WhatsApp link çöplüğünden kurtarıp; **gerçek zamanlı, çok oyunculu (multiplayer) ve yapay zeka moderatörlüğünde** premium bir deneyime dönüştüren bir Chrome eklentisi ve socket server ekosistemidir.
+SyncShop; arkadaşlarınız veya ailenizle birlikte internetten alışveriş yapma sürecini (hediye seçimi, çeyiz hazırlığı, ev alışverişi vb.) WhatsApp link çöplüğünden kurtaran yenilikçi bir Chrome Eklentisi ve Socket ekosistemidir. Gerçek zamanlı, çok oyunculu (multiplayer) ve yapay zeka moderatörlüğünde premium bir alışveriş deneyimi sunar.
+
+> **Not:** Şu an sadece Trendyol desteklidir. İlerleyen zamanlarda diğer e-ticaret siteleri de eklenecektir.
+
+---
+
+## 🎯 Neden SyncShop? (Problemin Çözümü)
+
+**Problem:** Birden fazla kişinin dahil olduğu e-ticaret alışverişlerinde kararlar WhatsApp gruplarında sayısız ürün linkinin paylaşılmasıyla verilir. Kimin hangi ürünü beğendiği, ürünlerin karşılaştırması ve nihai karar süreci kaotiktir.
+
+**Çözüm:** SyncShop ile kullanıcılar bir odaya katılır ve e-ticaret sitelerinde (örn. Trendyol, Hepsiburada) **aynı anda** gezinirler. Ürünler tek tıkla ortak bir sepete (koleksiyona) atılır, beraber oylanır ve karar verilemeyen durumlarda Yapay Zeka devreye girerek gruptaki bütçe, beklenti ve oylama verilerini analiz edip en mantıklı seçimi yapar.
 
 ---
 
 ## ✨ Öne Çıkan Özellikler
 
-### 1. Multiplayer Cursors (Gerçek Zamanlı Mouse İmleçleri) 🖱️💨
+### 🖱️ 1. Multiplayer Cursors (Gerçek Zamanlı Mouse İmleçleri)
 Aynı ürün sayfasında olan kullanıcılar birbirlerinin mouse imleçlerini ve hareketlerini ekranlarında anlık olarak görür.
-- **Akıllı Çözünürlük Eşitleme:** Her kullanıcının ekran boyutu farklı olabileceği için koordinatlar X ekseninde yüzdelik (`pageX / width`), Y ekseninde ise mutlak piksel (`pageY`) olarak normalize edilir.
-- **Süper Akıcı Çizim:** React render döngüleri bypass edilerek tarayıcının yerel çizim döngüsü olan `requestAnimationFrame` ve CSS `transform: translate` kullanılmıştır. İmleçler saniyede 20 kare (50ms) veri akışı ile sıfır gecikmeyle hareket eder.
+<img src="docs/assets/multiplayer_cursor.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
+- **Akıllı Çözünürlük Eşitleme:** Her kullanıcının ekran boyutu farklı olabileceği için koordinatlar merkez-odaklı (center-relative) olarak normalize edilir.
+- **Süper Akıcı Çizim:** Tarayıcının yerel çizim döngüsü olan `requestAnimationFrame` ve donanım hızlandırmalı CSS transform'ları ile saniyede 20 kare (50ms) sıfır gecikmeli senkronizasyon.
 
-### 2. Canlı Oda ve Ekran Senkronizasyonu 🔗
-- Odadaki arkadaşınızın hangi e-ticaret sitesinde hangi ürünü incelediğini anlık olarak görün.
-- "Yanına Git" (Işınlan) butonuna tek tıklamayla arkadaşınızın baktığı ürün sayfasına saniyeler içinde geçiş yapın.
+### 🔗 2. Canlı Oda ve Ekran Senkronizasyonu
+Odada bulunan bir kullanıcının anlık olarak hangi sitede, hangi ürünü incelediğini yan panelden takip edin. İsterseniz **"Yanına Git"** butonuna tıklayarak arkadaşınızın ekranına ışınlanın!
 
-### 3. Manuel Ürün Koleksiyonu & Mikro-Animasyonlar ➕📦
-- Ürün sayfalarında gezerken rahatsız edici otomatik ekleme yapılmaz. Ürün algılandığında beliren yeşil **"Koleksiyona Ekle"** butonuna basılarak tamamen manuel ve kontrollü olarak ekleme yapılır.
-- Ekleme yapıldığında butonda büyüme, dönen onay işareti (✓) ve "Eklendi!" yazan şık mikro-animasyonlar oynatılır.
-- Koleksiyon sekmesinden ürünleri anında kaldırabilmek için **Çöp Kutusu (🗑️)** entegrasyonu mevcuttur.
+<img src="docs/assets/teleport.png" alt="SyncShop Teleport" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 
-### 4. AI Seçim Asistanı & Tavsiye Sihirbazı 🤖💬
-- Koleksiyon ekranındaki **"AI'dan Seçim Asistanı İste"** butonuyla alışveriş kararlarınızı yapay zekaya danışın.
-- Bot gruptan ideal bütçe, kullanım amacı ve kime hediye alınacağı bilgilerini ister.
-- Kullanıcıların gruptaki beğeni oylarına (👍/👎), fiyat/performans verilerine bakarak en uygun ürünü gerekçeleriyle birlikte chat paneline yazar.
+### 🤖 3. AI Seçim Asistanı & Moderatör
+Grup olarak kararsız kaldığınızda **"AI'dan Seçim Asistanı İste"** butonunu kullanın. 
+<img src="docs/assets/ai_assistant.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
+<img src="docs/assets/ai_analysis.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
+- AI, ürünü kime aldığınızı ve bütçenizi analiz eden mini bir anket sunar.
+- Gruptaki tüm kullanıcıların beğeni oylarına (👍/👎), fiyat/performans grafiklerine ve kullanıcı yorumlarına bakarak **en doğru, mantıklı kararı ve gerekçesini** gruba özetler.
+- SyncShop Backend'i Trendyol API'lerine doğrudan bağlanarak ürün değerlendirmelerini çeker ve Gemini modelini besler.
 
-### 5. Akıllı Bağlantı & Yenileme Koruması 🔌
-- Sayfa yenilemelerinde (F5) socket bağlantısı kopsa dahi **5 saniyelik grace period (bekleme süresi)** sayesinde oda kirlenmez, kullanıcı "ayrıldı/katıldı" mesajı spamlanmadan kesintisiz alışverişe devam eder.
+<img src="docs/assets/ai_result.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 
----
 
-## 🛠️ Teknolojik Altyapı
+### 💬 4. Dahili Sohbet (In-App Chat)
+Sayfa değiştirmeden, ekranın köşesindeki cam görünümlü (Glassmorphism) modern panelden arkadaşlarınızla anlık olarak yazışın. Birini etiketlediğinizde (Mention) ona özel renkli bildirimler gider.
 
-### Frontend (Chrome Extension)
-- **Framework:** React + Vite + Vanilla CSS (Glassmorphism & Neon UI Aesthetics).
-- **Socket Client:** Socket.IO-client.
-- **Custom Build Pipeline:** Chrome'un Content Script'lerde ES Module kısıtlaması nedeniyle özel yazılmış **IIFE Bundle Script** (Vite compile & static copy orchestrator).
-
-### Backend (Socket & Rest Server)
-- **Core:** Bun / Node.js + Express.js.
-- **Realtime:** Socket.IO (Room management & real-time messaging).
-- **Yapay Zeka:** Adapter Pattern ile tasarlanmış **Provider-Agnostic AI Client**. 
-  - Geliştirme (Dev) ortamında hızlı ve bütçe dostu **Groq Llama-3.3-70b-versatile**.
-  - Production ortamında yüksek zekalı **Google Gemini-2.0-flash**.
-- **Database:** Supabase (PostgreSQL) - Session, Product ve Chat geçmişi yönetimi.
+### 🔌 5. Akıllı Bağlantı & Zombie Session Koruması
+Tarayıcı yanlışlıkla kapandığında veya sayfa yenilendiğinde (F5) "Ayrıldı/Katıldı" mesajlarıyla sohbet kirlenmez. Sunucu, kullanıcıyı otomatik olarak çevrimdışı (offline) moda alır ve 10 dakika boyunca odada kimse aktif olmazsa Supabase üzerinden odayı kalıcı olarak silip temizler.
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+## 🛠️ Teknolojik Altyapı (Architecture)
 
-### 1. Server Kurulumu
-```bash
-cd server
-# Bağımlılıkları yükle
-bun install  # veya npm install
+Projemiz modern web standartları ve performans gözetilerek tasarlanmıştır. 
 
-# .env dosyasını oluşturup gerekli keyleri ekleyin
-# GEMINI_API_KEY, AI_API_KEY (Groq), SUPABASE_URL, SUPABASE_ANON_KEY
+### 🎨 Frontend (Chrome Extension)
+- **Framework:** React + Vite
+- **Tasarım Dili:** Glassmorphism
+- **Mimari Not:** Chrome'un Content Script kısıtlamalarını aşabilmek adına Vite üzerinde özel bir **IIFE Bundle Pipeline** orchestrator kullanılmıştır.
 
-# Geliştirme sunucusunu başlat
-bun run dev
-```
-
-### 2. Extension Kurulumu
-```bash
-cd extension
-# Bağımlılıkları yükle
-bun install
-
-# Extension'ı derle (IIFE modunda dist/ klasörüne çıkarır)
-bun run build
-```
-- Tarayıcınızda `chrome://extensions` adresine gidin.
-- Sağ üstteki **"Geliştirici modu"** (Developer mode) seçeneğini aktif edin.
-- Sol üstteki **"Paketlenmemiş eklenti yükle"** (Load unpacked) butonuna basın.
-- `extension/dist` klasörünü seçip yükleyin.
+### ⚙️ Backend (Socket & Rest Server)
+- **Core Engine:**  Node.js / Express.js
+- **Realtime Layer:** Socket.IO
+- **Yapay Zeka (AI):** Google Gemini-2.0-flash.
+- **Database:** Supabase (PostgreSQL).
 
 ---
 
-## 🎨 Tasarım Standartları
-- **Glassmorphism:** Yarı saydam, arka planı buzlu cam efekti veren modern sidebar tasarımı.
-- **Neon Accent:** Koyu tema üzerinde hayat bulan, kullanıcıyı yormayan neon yeşil, mavi ve mor renk paletleri.
-- **Micro-interactions:** Butonların üzerine gelindiğinde (hover) veya tıklandığında (click) kullanıcıyı ödüllendiren akıcı animasyonlar.
+## 🚀 Kurulum ve Çalıştırma (Jüri İçin)
+
+### 1. Backend (Sunucu) Kurulumu
+1. Terminalden `server` klasörüne girin: `cd server`
+2. Paketleri yükleyin: `bun install` *(veya `npm install`)*
+3. Bir `.env` dosyası oluşturup aşağıdaki API anahtarlarını tanımlayın:
+   ```env
+    PORT=3001
+    AI_PROVIDER=gemini
+    GEMINI_API_KEY=your_gemini_api_key_here
+    SUPABASE_URL=https://xxx.supabase.co
+    SUPABASE_KEY=sb_secret_key
+   ```
+4. Sunucuyu başlatın: `bun run dev` (veya `npm run dev`)
+
+### 2. Eklentinin (Extension) Yüklenmesi
+1. Terminalden `extension` klasörüne girin: `cd extension`
+2. Paketleri yükleyin: `bun install`
+3. Eklentiyi derleyin: `bun run build`
+4. Tarayıcınızda (Chrome/Edge/Brave) `chrome://extensions` adresini açın.
+5. Sağ üst köşedeki **"Geliştirici modu" (Developer Mode)** anahtarını açın.
+6. Sol üstteki **"Paketlenmemiş öğe yükle" (Load unpacked)** butonuna tıklayın.
+7. Bilgisayarınızdan `SyncShop/extension/dist` klasörünü seçin.
+
+> 🎉 Tebrikler! Trendyol  üzerinde gezindiğinizde SyncShop arayüzü ekranın sağ tarafında otomatik olarak belirecektir.
+
+---
+
+## 👥 Geliştirici Ekibi
+
+Bu proje **BTK Hackathon 2026** kapsamında geliştirilmiştir.
+
+- **Fatih Kabul** - *Full-Stack Developer* - [GitHub](https://github.com/zamazincode) | [LinkedIn](https://linkedin.com/in/fatihkabul)
+- **Serhat Arslan** - *Full-Stack Developer* - [GitHub](https://github.com/serhatx1) | [LinkedIn](https://linkedin.com/in/serhat-arslann)
+
+---
+<div align="center">
+  <sub>SyncShop © 2026 | Birlikte Seçin, Birlikte Alın.</sub>
+</div>
