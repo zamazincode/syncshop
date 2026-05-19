@@ -32,7 +32,7 @@ SyncShop; arkadaşlarınız veya ailenizle birlikte internetten alışveriş yap
 
 ## ✨ Öne Çıkan Özellikler
 
-### 🖱️ 1. Multiplayer Cursors (Gerçek Zamanlı Mouse İmleçleri)
+### 🖱️ 1. Çok Kullanıcılı Cursors (Gerçek Zamanlı Mouse İmleçleri)
 Aynı ürün sayfasında olan kullanıcılar birbirlerinin mouse imleçlerini ve hareketlerini ekranlarında anlık olarak görür.
 <img src="docs/assets/multiplayer_cursor.png" alt="SyncShop Cursor" width="100%" style="border-radius: 2px;border: 1px solid #000;border-radius: 24px;" />
 - **Akıllı Çözünürlük Eşitleme:** Her kullanıcının ekran boyutu farklı olabileceği için koordinatlar merkez-odaklı (center-relative) olarak normalize edilir.
