@@ -2,8 +2,8 @@ import {
   joinSession, getSession,
   addMessage, updateUserPage, removeUser,
 } from '../services/session.js';
-import { addProduct, removeProduct, voteProduct } from '../services/product.js';
-import { handleChat, runAI, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
+import { addProduct, removeProduct, voteProduct, updateProductAnalysis } from '../services/product.js';
+import { handleChat, runAI, analyzeProduct, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
 
 export function registerHandlers(io, socket) {
   let currentRoom = null;
@@ -80,7 +80,31 @@ export function registerHandlers(io, socket) {
         io.to(currentRoom).emit('message', botMsg);
         return;
       }
-      
+
+      // Auto-analyze products that haven't been analyzed yet
+      const unanalyzed = targetProducts.filter(p => !p.aiAnalysis);
+      if (unanalyzed.length > 0) {
+        console.log(`[Socket] Auto-analyzing ${unanalyzed.length} products before comparison...`);
+        
+        await Promise.all(unanalyzed.map(async (product) => {
+          const reviews = product.raw_reviews || product.rawReviews || [];
+          if (reviews.length === 0) {
+            console.log(`[Socket] Skipping analysis for ${product.name} — no reviews`);
+            return;
+          }
+
+          const productWithReviews = { ...product, reviews };
+          const analysis = await analyzeProduct(productWithReviews);
+
+          if (analysis) {
+            product.aiAnalysis = analysis;
+            await updateProductAnalysis(product.id, analysis);
+            io.to(currentRoom).emit('ai-analysis', { productId: product.id, analysis });
+            console.log(`[Socket] Auto-analyzed: ${product.name} (trust: ${analysis.trustScore}%)`);
+          }
+        }));
+      }
+
       const result = await generateRecommendationQuestions(targetProducts, session);
 
       if (!result || !result.questions) {
