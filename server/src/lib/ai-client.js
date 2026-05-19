@@ -122,7 +122,9 @@ export async function generateText(prompt) {
         temperature: 0.7,
         max_tokens: 2048,
       });
-      return response.choices[0].message.content;
+      const content = response?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('503 Model returned an empty response');
+      return content;
     } else if (provider === 'groq') {
       const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
@@ -131,7 +133,9 @@ export async function generateText(prompt) {
         temperature: 0.7,
         max_tokens: 2048,
       });
-      return response.choices[0].message.content;
+      const content = response?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('503 Model returned an empty response');
+      return content;
     } else {
       const modelName = env.AI_MODEL || 'gemini-2.5-flash';
       const model = geminiClient.getGenerativeModel({
@@ -214,7 +218,9 @@ export async function generateJSON(prompt) {
         max_tokens: 2048,
         response_format: { type: 'json_object' },
       });
-      return safeJSONParse(response.choices[0].message.content);
+      const content = response?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('503 Model returned an empty response');
+      return safeJSONParse(content);
     } else if (provider === 'groq') {
       const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
@@ -224,7 +230,9 @@ export async function generateJSON(prompt) {
         max_tokens: 2048,
         response_format: { type: 'json_object' },
       });
-      return safeJSONParse(response.choices[0].message.content);
+      const content = response?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('503 Model returned an empty response');
+      return safeJSONParse(content);
     } else {
       const modelName = env.AI_MODEL || 'gemini-2.5-flash';
       const model = geminiClient.getGenerativeModel({
