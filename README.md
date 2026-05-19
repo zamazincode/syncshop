@@ -89,6 +89,7 @@ Projemiz modern web standartları ve performans gözetilerek tasarlanmıştır.
 - **Realtime Layer:** Socket.IO
 - **Yapay Zeka (AI):** Google Gemini-2.0-flash.
 - **Database:** Supabase (PostgreSQL).
+- **Deployment (Canlı Sunucu):** Render üzerinde barındırılmaktadır.
 
 ---
 
