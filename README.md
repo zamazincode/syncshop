@@ -16,7 +16,7 @@
 
 > **Alışverişi link çöplüğünden kurtarın; birlikte arayın, AI ile ortak karar verin.**
 
-SyncShop; arkadaşlarınız veya ailenizle birlikte internetten alışveriş yapma sürecini (hediye seçimi, çeyiz hazırlığı, ev alışverişi vb.) WhatsApp link çöplüğünden kurtaran yenilikçi bir Chrome Eklentisi ve Socket ekosistemidir. Gerçek zamanlı, çok oyunculu (multiplayer) ve yapay zeka moderatörlüğünde premium bir alışveriş deneyimi sunar.
+SyncShop; arkadaşlarınız veya ailenizle birlikte internetten alışveriş yapma sürecini (hediye seçimi, çeyiz hazırlığı, ev alışverişi vb.) WhatsApp link çöplüğünden kurtaran yenilikçi bir Chrome Eklentisi ve Socket ekosistemidir. Gerçek zamanlı, çok kullanıcılı ve yapay zeka moderatörlüğünde akıcı bir alışveriş deneyimi sunar.
 
 > **Not:** Şu an sadece Trendyol desteklidir. İlerleyen zamanlarda diğer e-ticaret siteleri de eklenecektir.
 
