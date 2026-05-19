@@ -212,8 +212,8 @@ export async function generateRecommendationQuestions(products, sessionData) {
   → AI Analiz: %${a.trustScore} güven | ${a.priceVerdict} | ${a.authenticityRisk} risk
   → Özet: ${a.summary || '-'}
   → Gizli Gerçek: ${a.hiddenTruth || '-'}
-  → Artılar: ${(a.pros || []).join(', ')}
-  → Eksiler: ${(a.cons || []).join(', ')}`;
+  → Artılar: ${(a.pros || []).map(p => typeof p === 'object' ? p.text : p).join(', ')}
+  → Eksiler: ${(a.cons || []).map(c => typeof c === 'object' ? c.text : c).join(', ')}`;
         }
 
         // Include top review excerpts if available
@@ -234,7 +234,7 @@ export async function generateRecommendationQuestions(products, sessionData) {
 ${productsContext}
 
 GÖREVLERİN:
-Kullanıcının kararını netleştirecek tam 3 adet soru üret. Her soru için 4 adet tıklanabilir seçenek ver.
+Kullanıcının kararını netleştirecek tam 1 adet soru üret. Soru için 4 adet tıklanabilir seçenek ver.
 
 SORU KURALLARI:
 1. KESİNLİKLE ürünler hakkında bilgi/olgusal (factual) sorular sorma (Örn: "Hangi ürün daha ucuz?", "Hangi ürünün puanı daha yüksek?" gibi sorular sormak YASAKTIR. Bu veriler sende zaten var!).
@@ -285,8 +285,8 @@ export async function generateFinalRecommendation(products, sessionData, answers
   → AI Analiz: %${a.trustScore} güven | ${a.priceVerdict} | ${a.authenticityRisk} risk
   → Özet: ${a.summary || '-'}
   → Gizli Gerçek: ${a.hiddenTruth || '-'}
-  → Artılar: ${(a.pros || []).join(', ')}
-  → Eksiler: ${(a.cons || []).join(', ')}`;
+  → Artılar: ${(a.pros || []).map(p => typeof p === 'object' ? p.text : p).join(', ')}
+  → Eksiler: ${(a.cons || []).map(c => typeof c === 'object' ? c.text : c).join(', ')}`;
         }
 
         let reviewBlock = '';
@@ -313,20 +313,29 @@ KULLANICI TERCİHLERİ:
 ${answersContext}
 
 GÖREVLERİN:
-1. Yanıtının EN BAŞINDA kullanıcıların ürünleri doğrudan karşılaştırabilmesi için tam olarak aşağıdaki formatta bir Markdown Tablosu oluştur:
-| Ürün | Karar | Eşleşme Nedeni | Fiyat & Oylar |
-| --- | --- | --- | --- |
-| [Kısa Ürün Adı 1] | 🏆 En Uygun Seçim | [Neden bu kişiye uygun?] | [Fiyat]₺ - 👍[Up] 👎[Down] |
-| [Kısa Ürün Adı 2] | 🥈 En İyi Alternatif | [Neden alternatif?] | [Fiyat]₺ - 👍[Up] 👎[Down] |
+Kullanıcının cevaplarını ve gruptaki ürün oylarını dikkate alarak ürünleri karşılaştır ve aşağıdaki JSON formatında yanıt ver. 
 
-2. Tablonun altına EN FAZLA 2-3 cümlelik son derece kısa, samimi ve Türkçe bir özet yaz.
-3. Karar verirken kullanıcıların bütçe, kullanım amacı cevaplarını ve odadaki grup oylarını (👍/👎) göz önünde bulundur.`;
+JSON FORMATI KURALI:
+{
+  "recommendations": [
+    {
+      "productId": "Ürünün ID'si (yukarıda verilmediyse adından tahmin et veya boş bırak)",
+      "productName": "Ürün Adı",
+      "award": "winner" veya "alternative",
+      "reason": "Bu ürün neden seçildi? (Kısa ve net)",
+      "priceAndVotes": "Fiyat ve Oylar (Örn: 355₺ - 👍2 👎0)"
+    }
+  ],
+  "summary": "Sonuç için en fazla 2 cümlelik, samimi, Türkçe özet."
+}
+SADECE GEÇERLİ BİR JSON DÖNDÜR.`;
 
     console.log('\n[AI] ═══ FINAL RECOMMENDATION PROMPT ═══');
     console.log(prompt);
     console.log('[AI] ═══ END PROMPT ═══\n');
 
-    return await generateText(prompt);
+    const result = await generateJSON(prompt);
+    return `[RECOMMENDATION_JSON]${JSON.stringify(result)}`;
   } catch (e) {
     console.error('[AI] generateFinalRecommendation error:', e.message);
     return '🤖 **SyncBot:** Final tavsiye oluşturulurken bir hata oluştu.';

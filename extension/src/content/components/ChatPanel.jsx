@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { MessageSquare, Bot, Send } from 'lucide-react';
 import QuestionCard from './QuestionCard.jsx';
+import RecommendationCard from './RecommendationCard.jsx';
 
 export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading, isBotThinking }) {
   const [text, setText] = useState('');
@@ -94,11 +95,11 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
     const bodyRows = rows.slice(1);
 
     const headerHTML = headers.map(h => `<th style="text-align: left; padding: 8px 10px; font-weight: 600; text-transform: uppercase; font-size: 8px; letter-spacing: 0.05em; color: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); white-space: nowrap;">${h}</th>`).join('');
-    
+
     const bodyHTML = bodyRows.map((row, rIdx) => {
       const bg = rIdx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent';
-      return `<tr style="background: ${bg};">` + 
-        row.map(cell => `<td style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 300; white-space: nowrap;">${cell}</td>`).join('') + 
+      return `<tr style="background: ${bg};">` +
+        row.map(cell => `<td style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 300; white-space: nowrap;">${cell}</td>`).join('') +
         `</tr>`;
     }).join('');
 
@@ -166,6 +167,38 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
     return html;
   }
 
+  // Memoized component to prevent re-rendering and losing scroll state on tables
+  const MessageItem = memo(({ msg, isMe, isBot }) => {
+    // Special rich-UI for JSON recommendation payloads
+    if (msg.text && msg.text.startsWith('[RECOMMENDATION_JSON]')) {
+      try {
+        const jsonStr = msg.text.substring('[RECOMMENDATION_JSON]'.length);
+        const data = JSON.parse(jsonStr);
+        return <RecommendationCard data={data} />;
+      } catch (err) {
+        console.error('Failed to parse recommendation JSON:', err);
+      }
+    }
+
+    return (
+      <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+        <span className={`text-[9px] font-medium text-white/40 uppercase tracking-widest mb-1.5 ${isMe ? 'mr-1' : 'ml-1'}`}>
+          {isMe ? 'SEN' : msg.from.toUpperCase()}
+        </span>
+        <div
+          className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${isMe
+            ? 'bg-white text-black rounded-tr-sm shadow-md'
+            : isBot
+              ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
+              : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
+            }`}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
+        />
+      </div>
+    );
+  }, (prev, next) => prev.msg.text === next.msg.text && prev.msg.from === next.msg.from);
+
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
@@ -182,22 +215,7 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
         {messages?.map((msg, i) => {
           const isMe = msg.from === userName;
           const isBot = msg.from === 'SyncBot';
-          return (
-            <div key={msg.id || i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-              <span className={`text-[9px] font-medium text-white/40 uppercase tracking-widest mb-1.5 ${isMe ? 'mr-1' : 'ml-1'}`}>
-                {isMe ? 'SEN' : msg.from.toUpperCase()}
-              </span>
-              <div
-                className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${isMe
-                  ? 'bg-white text-black rounded-tr-sm shadow-md'
-                  : isBot
-                    ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
-                    : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
-                  }`}
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
-              />
-            </div>
-          );
+          return <MessageItem key={msg.id || i} msg={msg} isMe={isMe} isBot={isBot} />;
         })}
         <div ref={messagesEndRef} />
       </div>
