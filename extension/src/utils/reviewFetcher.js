@@ -80,7 +80,7 @@ export async function fetchTrendyolReviews(productUrl, productRating = 4.5) {
 
     // Paralel fetch — 4 istek aynı anda gider
     const responses = await Promise.all(
-      Object.values(urls).map((url) => fetch(url).then((r) => r.text()).catch(() => ''))
+      Object.values(urls).map((url) => fetch(url, { headers: { 'x-agentname': 'web' } }).then((r) => r.text()).catch(() => ''))
     );
 
     const [textWorst, textBest, textNeutral, textHelpful] = responses;
@@ -172,7 +172,7 @@ export async function fetchTrendyolDescription(productUrl) {
     const contentId = match[1];
 
     const apiUrl = `https://apigw.trendyol.com/discovery-storefront-trproductgw-service/api/component-read/component/${contentId}?channelId=1`;
-    const res = await fetch(apiUrl);
+    const res = await fetch(apiUrl, { headers: { 'x-agentname': 'web' } });
     if (!res.ok) return '';
 
     const data = await res.json();

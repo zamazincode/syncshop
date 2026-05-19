@@ -258,16 +258,17 @@ export default function ProductCard({
             className="relative max-w-[85vw] max-h-[85vh] bg-[#0a0a0c] p-2 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center animate-scale-up"
           >
             <img
+              onClick={() => setIsZoomed(false)}
               src={p.imageUrl}
               alt={p.name}
-              className="max-w-[70vw] max-h-[70vh] rounded-xl object-contain"
+              className="w-[70vw] h-auto rounded-xl object-cover"
             />
-            <button
+            {/* <button
               onClick={() => setIsZoomed(false)}
               className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-[#0a0a0c] border border-white/10 hover:bg-[#1a1a1d] text-white/50 hover:text-white flex items-center justify-center cursor-pointer shadow-lg transition-colors"
             >
               <X size={12} strokeWidth={1.5} />
-            </button>
+            </button> */}
           </div>
         </div>
       )}
