@@ -21,7 +21,12 @@ export default function App() {
     sendBrowsingUpdate,
   });
 
-  const isProductAdded = detectedProduct && addedUrls.has(detectedProduct.productUrl);
+  const isProductAdded = Boolean(
+    detectedProduct && (
+      addedUrls.has(detectedProduct.productUrl) ||
+      session?.products?.some(p => p.productUrl === detectedProduct.productUrl || p.url === detectedProduct.productUrl)
+    )
+  );
 
   function handleAddProduct() {
     if (!detectedProduct || !connected) return;
@@ -48,11 +53,11 @@ export default function App() {
   return (
     <>
       {connected && (
-        <CursorOverlay 
-          socket={socket} 
-          sendCursorUpdate={sendCursorUpdate} 
-          connected={connected} 
-          session={session} 
+        <CursorOverlay
+          socket={socket}
+          sendCursorUpdate={sendCursorUpdate}
+          connected={connected}
+          session={session}
         />
       )}
       <Fab
@@ -76,6 +81,9 @@ export default function App() {
         onSendMessage={sendMessage}
         onRemoveProduct={removeProduct}
         onRequestRecommendation={handleRequestRecommendation}
+        detectedProduct={detectedProduct}
+        isAdded={isProductAdded}
+        onAddProduct={handleAddProduct}
       />
     </>
   );

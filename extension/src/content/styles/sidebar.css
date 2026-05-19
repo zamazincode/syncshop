@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /**
@@ -14,7 +15,7 @@
  */
 
 @theme {
-  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
   --color-primary: #6366f1;
   --color-primary-light: #818cf8;
@@ -30,22 +31,59 @@
   --color-border-hover: rgba(255, 255, 255, 0.15);
   --color-text: #ffffff;
   --color-text-muted: #94a3b8;
+
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-scale-up: scale-up 0.2s ease-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scale-up {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
 }
 
 /* ═══ SCROLLBAR ═══ */
-.ss-scrollbar::-webkit-scrollbar { width: 5px; }
-.ss-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.ss-scrollbar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
-.ss-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+.ss-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ss-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ss-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+.ss-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
 
 /* ═══ ANIMATIONS ═══ */
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 @keyframes slideRight {
-  from { right: -420px; }
-  to   { right: 16px; }
+  from {
+    right: -420px;
+  }
+
+  to {
+    right: 16px;
+  }
 }
 
 .animate-slide-up {

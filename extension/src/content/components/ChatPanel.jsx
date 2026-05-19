@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MessageSquare, Bot, Send } from 'lucide-react';
 
 export default function ChatPanel({ messages, userName, users = [], onSend }) {
   const [text, setText] = useState('');
@@ -86,26 +87,31 @@ export default function ChatPanel({ messages, userName, users = [], onSend }) {
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 ss-scrollbar">
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4 ss-scrollbar">
         {(!messages || messages.length === 0) && (
-          <div className="flex-1 flex flex-col items-center justify-center opacity-50 py-16">
-            <div className="text-4xl mb-3">💬</div>
-            <div className="text-sm">Henüz mesaj yok</div>
-            <div className="text-xs text-text-muted mt-1">@SyncBot ile AI'a sor</div>
+          <div className="flex-1 flex flex-col items-center justify-center opacity-30 py-16 text-center">
+            <div className="mb-4 text-text-muted">
+              <MessageSquare size={36} strokeWidth={1} />
+            </div>
+            <div className="text-xs font-medium tracking-wide">HENÜZ MESAJ YOK</div>
+            <div className="text-[10px] text-text-muted mt-1.5">@SyncBot yazarak AI asistanla konuşun</div>
           </div>
         )}
         {messages?.map((msg, i) => {
           const isMe = msg.from === userName;
+          const isBot = msg.from === 'SyncBot';
           return (
             <div key={msg.id || i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-              <span className={`text-[10px] font-bold text-text-muted uppercase tracking-wide mb-1 ${isMe ? 'mr-1' : 'ml-1'}`}>
-                {isMe ? 'Sen' : msg.from}
+              <span className={`text-[9px] font-medium text-white/40 uppercase tracking-widest mb-1.5 ${isMe ? 'mr-1' : 'ml-1'}`}>
+                {isMe ? 'SEN' : msg.from.toUpperCase()}
               </span>
               <div
-                className={`max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed break-words ${
+                className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${
                   isMe
-                    ? 'bg-primary text-white rounded-br-sm shadow-lg shadow-primary-glow/30'
-                    : 'bg-card border border-border rounded-bl-sm'
+                    ? 'bg-white text-black rounded-tr-sm shadow-md'
+                    : isBot
+                    ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
+                    : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
                 }`}
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
               />
@@ -116,28 +122,28 @@ export default function ChatPanel({ messages, userName, users = [], onSend }) {
       </div>
 
       {/* Input Area */}
-      <div className="relative p-4 bg-black/20 shrink-0">
+      <div className="relative p-4 bg-black/10 border-t border-white/5 shrink-0">
         {/* Mention Autocomplete Dropdown */}
         {mentions.length > 0 && (
-          <div className="absolute bottom-full left-4 right-4 mb-1 bg-[#1a1a1e] border border-border rounded-xl overflow-hidden shadow-xl">
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#0d0d10] border border-white/10 rounded-lg overflow-hidden shadow-2xl">
             {mentions.map((m, i) => (
               <button
                 key={m.name}
                 onClick={() => insertMention(m)}
-                className={`w-full px-4 py-2.5 flex items-center gap-2.5 text-sm text-left border-none cursor-pointer transition-colors ${
-                  i === mentionIndex ? 'bg-primary/20 text-white' : 'bg-transparent text-text-muted hover:bg-white/5'
+                className={`w-full px-4 py-2 flex items-center gap-2 text-xs text-left border-none cursor-pointer transition-colors ${
+                  i === mentionIndex ? 'bg-white/10 text-white' : 'bg-transparent text-white/50 hover:bg-white/5'
                 }`}
               >
-                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                  m.type === 'bot' ? 'bg-primary text-white' : 'bg-accent text-white'
+                <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium shrink-0 ${
+                  m.type === 'bot' ? 'bg-white/10 text-white' : 'bg-white/20 text-white'
                 }`}>
-                  {m.type === 'bot' ? '🤖' : m.name[0].toUpperCase()}
+                  {m.type === 'bot' ? <Bot size={11} strokeWidth={1.25} /> : m.name[0].toUpperCase()}
                 </span>
-                <span className="font-semibold">{m.name}</span>
-                {m.type === 'bot' && <span className="text-[10px] text-text-muted ml-auto">AI Asistan</span>}
+                <span className="font-medium">{m.name}</span>
+                {m.type === 'bot' && <span className="text-[9px] text-white/40 ml-auto uppercase tracking-widest">AI Asistan</span>}
               </button>
             ))}
-            <div className="px-4 py-1.5 text-[10px] text-text-muted border-t border-border bg-black/20">
+            <div className="px-4 py-1.5 text-[9px] text-white/30 border-t border-white/5 bg-black/30">
               Tab ile seç · Esc ile kapat
             </div>
           </div>
@@ -150,13 +156,13 @@ export default function ChatPanel({ messages, userName, users = [], onSend }) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Mesaj yaz... (@SyncBot)"
-            className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary focus:bg-white/5 transition-all"
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-xs outline-none focus:border-white/20 focus:bg-white/10 transition-all font-light"
           />
           <button
             onClick={handleSend}
-            className="w-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold border-none hover:bg-primary-light transition-all cursor-pointer"
+            className="w-10 bg-white rounded-lg flex items-center justify-center text-black border-none hover:bg-gray-200 transition-all cursor-pointer"
           >
-            ↑
+            <Send size={14} strokeWidth={1.25} className="translate-x-[-0.5px] translate-y-[0.5px]" />
           </button>
         </div>
       </div>

@@ -1,17 +1,9 @@
+import { useState } from 'react';
 import { fetchTrendyolReviews } from '../../utils/reviewFetcher.js';
+import { Package, Star, Bot, XCircle, RefreshCcw, Sparkles, ShieldCheck, Search, AlertTriangle, Eye, CheckCircle2, ThumbsUp, ThumbsDown, ExternalLink, Trash2, X } from 'lucide-react';
 
 /**
  * ProductCard — Tek bir ürün kartı
- *
- * Eski kodda bu, renderProducts() içinde 60+ satırlık bir template literal'dı.
- * Şimdi her ürün kendi component'i — props alır, kendi state'ini yönetir.
- *
- * Props:
- * - product: Ürün bilgileri (name, price, imageUrl, aiAnalysis...)
- * - votes: Bu ürünün oyları { userId: { vote: 'up'|'down' } }
- * - userId: Aktif kullanıcının ID'si (kendi oyunu vurgulamak için)
- * - onVote: Oy callback'i
- * - onAnalyze: AI analiz callback'i
  */
 export default function ProductCard({ product, votes = {}, userId, onVote, onAnalyze, onRemove }) {
   const p = product;
@@ -22,10 +14,11 @@ export default function ProductCard({ product, votes = {}, userId, onVote, onAna
   const downCount = Object.values(votes).filter((v) => v.vote === 'down').length;
   const myVote = votes[userId]?.vote;
 
+  const [isZoomed, setIsZoomed] = useState(false);
+
   async function handleAnalyze() {
     if (p.aiStatus === 'analyzing') return;
 
-    // Yorumları çek ve analiz isteği gönder
     let reviews = [];
     if (p.site === 'trendyol') {
       reviews = await fetchTrendyolReviews(p.productUrl, p.ratingValue);
@@ -34,82 +27,93 @@ export default function ProductCard({ product, votes = {}, userId, onVote, onAna
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 transition-all hover:bg-card-hover hover:border-border-hover hover:-translate-y-1 animate-slide-up">
+    <div className="bg-transparent border border-white/5 rounded-2xl p-4 transition-all hover:bg-white/[0.02] hover:border-white/10">
       {/* ═══ HEADER: Image + Info ═══ */}
       <div className="flex gap-3 mb-4">
-        <img
-          src={p.imageUrl}
-          alt={p.name}
-          className="w-20 h-20 rounded-xl object-cover bg-[#1e1e20] shrink-0"
-          onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23222"/><text y="40" x="16" font-size="32">📦</text></svg>'; }}
-        />
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold leading-snug line-clamp-2">{p.name}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-lg font-extrabold text-accent">
-              {p.price?.toLocaleString('tr-TR')}₺
+        {p.imageUrl ? (
+          <img
+            src={p.imageUrl}
+            alt={p.name}
+            onClick={() => setIsZoomed(true)}
+            className="w-16 h-16 rounded-xl object-cover bg-black/20 shrink-0 border border-white/5 cursor-zoom-in hover:opacity-85 transition-opacity"
+            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          />
+        ) : null}
+        <div className="w-16 h-16 rounded-xl bg-black/20 shrink-0 flex items-center justify-center text-text-muted border border-white/5" style={{ display: p.imageUrl ? 'none' : 'flex' }}>
+          <Package size={24} strokeWidth={1} />
+        </div>
+        <div className="min-w-0 flex flex-col justify-center">
+          <h3 className="text-xs font-light leading-snug line-clamp-1 text-white/60 tracking-wide" title={p.name}>{p.name}</h3>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-[15px] font-semibold text-white tracking-wide">
+              {p.price?.toLocaleString('tr-TR')} ₺
             </span>
             {p.ratingValue > 0 && (
-              <span className="text-xs text-warning font-bold">⭐ {p.ratingValue}</span>
+              <span className="text-[10px] text-white/40 flex items-center gap-0.5">
+                <Star size={9} strokeWidth={1} fill="currentColor" /> {p.ratingValue}
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* ═══ AI ANALYSIS SECTION ═══ */}
+      {/* ═══ AI ANALYSIS STATUS SECTION ═══ */}
       {p.aiStatus === 'analyzing' ? (
-        <div className="bg-primary/10 rounded-xl p-3 mb-4 border-l-[3px] border-primary animate-pulse">
-          <span className="text-[10px] font-extrabold text-primary uppercase">🤖 AI Analiz Ediyor...</span>
+        <div className="bg-transparent rounded-lg p-2.5 mb-3 border border-white/10 animate-pulse flex items-center gap-2">
+          <Bot size={13} strokeWidth={1.25} className="text-white/50" />
+          <span className="text-[9px] font-medium text-white/50 uppercase tracking-widest mt-0.5">Analiz Ediliyor...</span>
         </div>
       ) : p.aiStatus === 'failed' ? (
-        <div className="bg-danger/10 rounded-xl p-3 mb-4 border-l-[3px] border-danger">
-          <span className="text-[10px] font-extrabold text-danger uppercase">❌ Analiz Başarısız</span>
+        <div className="bg-transparent rounded-lg p-2.5 mb-3 border border-danger/30 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <XCircle size={13} strokeWidth={1.25} className="text-danger" />
+            <span className="text-[9px] font-medium text-danger uppercase tracking-widest mt-0.5">Analiz Başarısız</span>
+          </div>
           <button
             onClick={handleAnalyze}
-            className="w-full mt-2 py-2 rounded-lg bg-card text-text-muted text-xs font-semibold border border-border hover:bg-card-hover transition-all cursor-pointer"
+            className="w-full py-1.5 rounded-md bg-transparent text-white/60 text-[10px] font-medium border border-white/10 hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            🔄 Tekrar Dene
+            <RefreshCcw size={11} strokeWidth={1.25} /> Tekrar Dene
           </button>
         </div>
-      ) : !a ? (
-        <button
-          onClick={handleAnalyze}
-          className="w-full mb-4 py-2.5 rounded-xl bg-primary text-white text-xs font-bold border-none hover:bg-primary-light transition-all cursor-pointer"
-        >
-          🤖 AI Analizini Başlat
-        </button>
       ) : null}
 
       {/* ═══ AI RESULTS (when available) ═══ */}
       {a && (
-        <div className="bg-primary/10 rounded-xl p-3 mb-4 border-l-[3px] border-primary space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-extrabold text-primary uppercase">✨ AI Analiz</span>
-            <span className={`text-[10px] font-bold ${
-              a.trustScore > 70 ? 'text-accent' : a.trustScore > 40 ? 'text-warning' : 'text-danger'
-            }`}>
-              🛡️ Güven: %{a.trustScore || '??'}
-            </span>
+        <div className="bg-transparent rounded-xl p-3.5 mb-3.5 border border-white/10 space-y-2.5">
+          <div className="flex justify-between items-center border-b border-white/5 pb-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={11} strokeWidth={1.25} className="text-white/50" />
+              <span className="text-[9px] font-medium text-white/50 uppercase tracking-widest mt-0.5">Analiz Sonucu</span>
+            </div>
+            <div className={`flex items-center gap-1 text-[9px] font-medium tracking-wide uppercase ${a.trustScore > 70 ? 'text-white/80' : a.trustScore > 40 ? 'text-warning' : 'text-danger'
+              }`}>
+              <ShieldCheck size={11} strokeWidth={1.25} /> %{a.trustScore || '??'} GÜVEN
+            </div>
           </div>
 
           <div>
-            <span className="text-xs text-warning font-bold">🕵️‍♂️ Gizli Gerçek:</span>
-            <p className="text-xs text-[#e2e8f0] italic mt-0.5 leading-relaxed">
+            <p className="text-[11px] text-white/50 font-light leading-relaxed">
               "{a.hiddenTruth || a.summary}"
             </p>
           </div>
 
           {a.authenticityRisk && (
-            <div className={`px-2 py-1.5 rounded text-[11px] font-bold border ${
-              a.authenticityRisk === 'High'
-                ? 'bg-danger/15 text-danger border-danger'
-                : a.authenticityRisk === 'Medium'
-                ? 'bg-warning/15 text-warning border-warning'
-                : 'bg-accent/15 text-accent border-accent'
-            }`}>
-              {a.authenticityRisk === 'High' ? '⚠️ YÜKSEK SAHTE RİSKİ' :
-               a.authenticityRisk === 'Medium' ? '👀 ŞÜPHELİ DURUM' : '✅ ORİJİNAL GÖRÜNÜYOR'}
-              <div className="font-normal opacity-90 mt-0.5">{a.authenticityReason}</div>
+            <div className={`px-2 py-1.5 mt-2 flex flex-col gap-0.5 rounded-lg text-[10px] font-medium border ${a.authenticityRisk === 'High'
+              ? 'bg-transparent text-danger border-danger/20'
+              : a.authenticityRisk === 'Medium'
+                ? 'bg-transparent text-warning border-warning/20'
+                : 'bg-transparent text-white/60 border-white/5'
+              }`}>
+              <div className="flex items-center gap-1">
+                {a.authenticityRisk === 'High' ? <AlertTriangle size={10} strokeWidth={1.25} /> :
+                  a.authenticityRisk === 'Medium' ? <Eye size={10} strokeWidth={1.25} /> : <CheckCircle2 size={10} strokeWidth={1.25} />}
+                <span className="tracking-wide uppercase text-[8px]">
+                  {a.authenticityRisk === 'High' ? 'Yüksek Risk' :
+                    a.authenticityRisk === 'Medium' ? 'Şüpheli' : 'Güvenilir'}
+                </span>
+              </div>
+              <div className="font-light text-white/30 text-[9px] leading-relaxed pl-3.5">{a.authenticityReason}</div>
             </div>
           )}
         </div>
@@ -117,42 +121,72 @@ export default function ProductCard({ product, votes = {}, userId, onVote, onAna
 
       {/* ═══ VOTE ACTIONS ═══ */}
       <div className="flex gap-2">
+        {!a && p.aiStatus !== 'analyzing' && p.aiStatus !== 'failed' && (
+          <button
+            onClick={handleAnalyze}
+            className="flex-[2] py-2 rounded-lg bg-transparent text-white/90 text-[11px] font-medium tracking-wide border border-white/15 hover:bg-white/5 hover:border-white/30 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1"
+          >
+            <Bot size={13} strokeWidth={1.25} /> AI Analiz
+          </button>
+        )}
         <button
           onClick={() => onVote(p.id, 'up')}
-          className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            myVote === 'up'
-              ? 'bg-accent/20 border-accent text-accent'
-              : 'bg-card border-border text-white hover:bg-card-hover'
-          }`}
+          className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'up'
+            ? 'bg-white text-black border-transparent'
+            : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
+            }`}
         >
-          👍 {upCount}
+          <ThumbsUp size={14} strokeWidth={1.25} /> {upCount}
         </button>
         <button
           onClick={() => onVote(p.id, 'down')}
-          className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            myVote === 'down'
-              ? 'bg-danger/20 border-danger text-danger'
-              : 'bg-card border-border text-white hover:bg-card-hover'
-          }`}
+          className={`flex-1 py-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${myVote === 'down'
+            ? 'bg-white text-black border-transparent'
+            : 'bg-transparent border-white/15 text-white/80 hover:bg-white/5 hover:border-white/30 hover:text-white'
+            }`}
         >
-          👎 {downCount}
+          <ThumbsDown size={14} strokeWidth={1.25} /> {downCount}
         </button>
         <a
           href={p.productUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-11 bg-primary rounded-xl flex items-center justify-center text-white no-underline hover:bg-primary-light transition-all"
+          className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/80 no-underline hover:bg-white/5 hover:border-white/30 hover:text-white transition-all"
         >
-          🔗
+          <ExternalLink size={14} strokeWidth={1.25} />
         </a>
         <button
           onClick={() => onRemove(p.id)}
-          className="w-11 bg-card border border-border rounded-xl flex items-center justify-center text-text-muted hover:bg-danger/20 hover:text-danger hover:border-danger transition-all cursor-pointer"
+          className="w-10 bg-transparent border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-all cursor-pointer"
           title="Ürünü Kaldır"
         >
-          🗑️
+          <Trash2 size={14} strokeWidth={1.25} />
         </button>
       </div>
+
+      {isZoomed && p.imageUrl && (
+        <div
+          onClick={() => setIsZoomed(false)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2147483647] flex items-center justify-center cursor-zoom-out animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-[85vw] max-h-[85vh] bg-[#0a0a0c] p-2 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center animate-scale-up"
+          >
+            <img
+              src={p.imageUrl}
+              alt={p.name}
+              className="max-w-[70vw] max-h-[70vh] rounded-xl object-contain"
+            />
+            <button
+              onClick={() => setIsZoomed(false)}
+              className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-[#0a0a0c] border border-white/10 hover:bg-[#1a1a1d] text-white/50 hover:text-white flex items-center justify-center cursor-pointer shadow-lg transition-colors"
+            >
+              <X size={12} strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
