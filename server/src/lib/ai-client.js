@@ -21,9 +21,10 @@ import { env } from '../config/env.js';
  * - Bu pattern'e "OpenAI-compatible" denir, birçok provider destekler
  */
 
-let provider = null;    // 'groq' | 'gemini'
+let provider = null;    // 'groq' | 'gemini' | 'openrouter'
 let groqClient = null;  // OpenAI SDK instance (Groq'a yönlendirilmiş)
 let geminiClient = null; // GoogleGenerativeAI instance
+let openrouterClient = null; // OpenAI SDK instance (OpenRouter'a yönlendirilmiş)
 let isConfigured = false;
 
 const MAX_RETRIES = 3;
@@ -66,7 +67,18 @@ export function initAI() {
   }
 
   try {
-    if (provider === 'groq') {
+    if (provider === 'openrouter') {
+      const model = env.AI_MODEL || 'openai/gpt-oss-120b:free';
+      openrouterClient = new OpenAI({
+        apiKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+        defaultHeaders: {
+          'HTTP-Referer': 'https://syncshop.zamazincode.com',
+          'X-Title': 'SyncShop',
+        }
+      });
+      console.log(`[AI] OpenRouter initialized (${model})`);
+    } else if (provider === 'groq') {
       const model = env.AI_MODEL || 'llama-3.3-70b-versatile';
       groqClient = new OpenAI({
         apiKey,
@@ -102,7 +114,16 @@ export async function generateText(prompt) {
   if (!isConfigured) throw new Error('AI not configured');
 
   return withRetry(async () => {
-    if (provider === 'groq') {
+    if (provider === 'openrouter') {
+      const modelName = env.AI_MODEL || 'openai/gpt-oss-120b:free';
+      const response = await openrouterClient.chat.completions.create({
+        model: modelName,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return response.choices[0].message.content;
+    } else if (provider === 'groq') {
       const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
         model: modelName,
@@ -140,7 +161,17 @@ export async function generateJSON(prompt) {
   if (!isConfigured) throw new Error('AI not configured');
 
   return withRetry(async () => {
-    if (provider === 'groq') {
+    if (provider === 'openrouter') {
+      const modelName = env.AI_MODEL || 'openai/gpt-oss-120b:free';
+      const response = await openrouterClient.chat.completions.create({
+        model: modelName,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' },
+      });
+      return JSON.parse(response.choices[0].message.content);
+    } else if (provider === 'groq') {
       const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
         model: modelName,
