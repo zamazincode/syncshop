@@ -23,12 +23,15 @@ function getReviews(product) {
       if (Array.isArray(parsed)) return parsed;
     } catch { }
     // Legacy text format: "[5★ Ekim 2025] yorum text"
-    return raw.split('\n').filter(Boolean).map(line => {
-      const match = line.match(/^\[(\d)★\s*([^\]]*)\]\s*(.*)/);
-      return match
-        ? { rating: Number(match[1]), date: match[2], text: match[3] }
-        : { rating: 0, date: '', text: line };
-    });
+    return raw.split('\n')
+      .filter(Boolean)
+      .filter(line => !line.startsWith('[ÜRÜN AÇIKLAMASI]:'))
+      .map(line => {
+        const match = line.match(/^\[(\d)★\s*([^\]]*)\]\s*(.*)/);
+        return match
+          ? { rating: Number(match[1]), date: match[2], text: match[3] }
+          : { rating: 0, date: '', text: line };
+      });
   }
   return [];
 }

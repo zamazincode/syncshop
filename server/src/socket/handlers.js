@@ -5,23 +5,18 @@ import {
 import { addProduct, removeProduct, voteProduct, updateProductAnalysis } from '../services/product.js';
 import { handleChat, runAI, analyzeProduct, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
 
+// Global map to track disconnect timers across socket connections (e.g. page refreshes)
+const disconnectTimers = new Map(); // "room:userId" -> timeoutId
+
 export function registerHandlers(io, socket) {
   let currentRoom = null;
   let currentUserId = null;
   let currentUserName = null;
 
-  let disconnectTimer = null;
-
   // ═══════════════════════════════════════
   // JOIN SESSION
   // ═══════════════════════════════════════
   socket.on('join-session', async ({ code, userName, userId }, callback) => {
-    // Cancel pending disconnect (page refresh)
-    if (disconnectTimer) {
-      clearTimeout(disconnectTimer);
-      disconnectTimer = null;
-    }
-
     const { session, userId: finalUserId, isNewJoin, error } = await joinSession(code, userName, userId);
     if (error) return callback?.({ error });
 
@@ -29,6 +24,14 @@ export function registerHandlers(io, socket) {
     currentUserId = finalUserId;
     currentUserName = userName;
     socket.join(currentRoom);
+
+    // Cancel pending disconnect if user reconnected within the grace period
+    const key = `${code}:${finalUserId}`;
+    if (disconnectTimers.has(key)) {
+      clearTimeout(disconnectTimers.get(key));
+      disconnectTimers.delete(key);
+      console.log(`[Socket] Reconnection detected: user ${userName} (${finalUserId}), cancelled disconnect timer.`);
+    }
 
     callback?.({ session, userId: finalUserId });
 
@@ -87,12 +90,6 @@ export function registerHandlers(io, socket) {
         console.log(`[Socket] Auto-analyzing ${unanalyzed.length} products before comparison...`);
 
         await Promise.all(unanalyzed.map(async (product) => {
-          const hasReviews = product.raw_reviews || product.rawReviews || product.reviews;
-          if (!hasReviews) {
-            console.log(`[Socket] Skipping analysis for ${product.name} — no reviews`);
-            return;
-          }
-
           const analysis = await analyzeProduct(product);
 
           if (analysis) {
@@ -150,12 +147,7 @@ export function registerHandlers(io, socket) {
 
     const newProduct = await addProduct(currentRoom, product, currentUserName);
     if (newProduct) {
-      const mapped = {
-        ...newProduct,
-        imageUrl: newProduct.image_url,
-        productUrl: newProduct.product_url,
-      };
-      io.to(currentRoom).emit('product-added', mapped);
+      io.to(currentRoom).emit('product-added', newProduct);
     }
   });
 
@@ -223,10 +215,20 @@ export function registerHandlers(io, socket) {
     if (currentRoom && currentUserId) {
       const room = currentRoom;
       const uid = currentUserId;
-      disconnectTimer = setTimeout(() => {
+      const key = `${room}:${uid}`;
+
+      // Clear any existing disconnect timer for this user connection
+      if (disconnectTimers.has(key)) {
+        clearTimeout(disconnectTimers.get(key));
+      }
+
+      const timer = setTimeout(() => {
         removeUser(room, uid);
         io.to(room).emit('user-left', { userId: uid });
+        disconnectTimers.delete(key);
       }, 5000);
+
+      disconnectTimers.set(key, timer);
     }
   });
 }

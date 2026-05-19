@@ -10,8 +10,20 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
+  const hasScrolledInitial = useRef(false);
+  const prevLengthRef = useRef(0);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const currentLength = messages?.length || 0;
+    if (currentLength === 0) return;
+
+    if (!hasScrolledInitial.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      hasScrolledInitial.current = true;
+    } else if (currentLength > prevLengthRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevLengthRef.current = currentLength;
   }, [messages?.length]);
 
   // @ yazıldığında mention listesini güncelle
@@ -77,11 +89,32 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
   }
 
   function renderMarkdown(rawText) {
+    if (!rawText) return '';
     let html = rawText;
+
+    // Headings (match lines starting with #, ##, ###)
+    html = html.replace(/^### (.*?)$/gm, '<h3 style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 10px; margin-bottom: 4px">$1</h3>');
+    html = html.replace(/^## (.*?)$/gm, '<h2 style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 12px; margin-bottom: 6px">$1</h2>');
+    html = html.replace(/^# (.*?)$/gm, '<h1 style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 14px; margin-bottom: 8px">$1</h1>');
+
+    // Bullet Lists (match lines starting with * or -)
+    html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li style="margin-left: 12px; list-style-type: disc; margin-bottom: 2px">$1</li>');
+
+    // Bold text (**bold**)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Images and Links
     html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="width:100%;border-radius:8px;margin:8px 0;display:block;border:1px solid rgba(255,255,255,0.1)" />');
     html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:#818cf8;text-decoration:underline;font-weight:700;word-break:break-all">$1</a>');
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Newlines to <br/>
     html = html.replace(/\n/g, '<br/>');
+
+    // Clean up double <br/> around headings and list elements
+    html = html.replace(/(<\/h[1-3]>)<br\/>/g, '$1');
+    html = html.replace(/<br\/>(<h[1-3]>)/g, '$1');
+    html = html.replace(/(<\/li>)<br\/>/g, '$1');
+
     return html;
   }
 
@@ -108,10 +141,10 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
               </span>
               <div
                 className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${isMe
-                    ? 'bg-white text-black rounded-tr-sm shadow-md'
-                    : isBot
-                      ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
-                      : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
+                  ? 'bg-white text-black rounded-tr-sm shadow-md'
+                  : isBot
+                    ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
+                    : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
                   }`}
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
               />

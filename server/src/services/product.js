@@ -6,6 +6,18 @@ import { supabase } from '../lib/supabase.js';
 
 export const productVotes = new Map(); // productId -> { userId: { vote: 'up'|'down' } }
 
+export function mapProductDbToFrontend(p) {
+  if (!p) return null;
+  return {
+    ...p,
+    imageUrl: p.image_url,
+    productUrl: p.product_url,
+    aiAnalysis: p.ai_analysis,
+    ratingValue: p.rating_value || 0,
+    ratingCount: p.rating_count || 0,
+  };
+}
+
 export async function addProduct(code, product, userName) {
   const url = (product.productUrl || '').split('?')[0];
 
@@ -49,20 +61,25 @@ export async function addProduct(code, product, userName) {
     return null;
   }
 
-  // Rating bilgileri DB'de yok, in-memory olarak ekliyoruz
-  data.ratingValue = product.ratingValue || 0;
-  data.ratingCount = product.ratingCount || 0;
-
-  return data;
+  return mapProductDbToFrontend({
+    ...data,
+    rating_value: data.rating_value || product.ratingValue || 0,
+    rating_count: data.rating_count || product.ratingCount || 0,
+  });
 }
 
-export async function updateProductAnalysis(productId, analysis, rawReviews = null) {
+export async function updateProductAnalysis(productId, analysis, rawReviews = undefined) {
+  const updateData = {};
+  if (analysis !== undefined) {
+    updateData.ai_analysis = analysis;
+  }
+  if (rawReviews !== undefined) {
+    updateData.raw_reviews = rawReviews;
+  }
+
   const { data, error } = await supabase
     .from('products')
-    .update({
-      ai_analysis: analysis,
-      raw_reviews: rawReviews,
-    })
+    .update(updateData)
     .eq('id', productId)
     .select()
     .single();
@@ -72,7 +89,7 @@ export async function updateProductAnalysis(productId, analysis, rawReviews = nu
     return null;
   }
 
-  return data;
+  return mapProductDbToFrontend(data);
 }
 
 export async function removeProduct(productId) {

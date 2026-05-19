@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-import { productVotes } from './product.js';
+import { productVotes, mapProductDbToFrontend } from './product.js';
 
 // ═══════════════════════════════════════
 // IN-MEMORY ONLINE USERS (per room)
@@ -94,14 +94,7 @@ export async function getSession(code) {
     .order('created_at', { ascending: true });
 
   // Map snake_case → camelCase for frontend
-  const products = (productsRaw || []).map((p) => ({
-    ...p,
-    imageUrl: p.image_url,
-    productUrl: p.product_url,
-    aiAnalysis: p.ai_analysis,
-    ratingValue: p.rating_value || 0,
-    ratingCount: p.rating_count || 0,
-  }));
+  const products = (productsRaw || []).map(mapProductDbToFrontend);
 
   // Fetch votes from in-memory map
   const votes = {};
