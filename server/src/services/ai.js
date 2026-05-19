@@ -106,10 +106,21 @@ export async function generateRecommendationQuestions(products, sessionData) {
         const ups = Object.values(votes).filter((v) => v.vote === 'up').length;
         const downs = Object.values(votes).filter((v) => v.vote === 'down').length;
         const rating = p.ratingValue ? `⭐${p.ratingValue}/5 (${p.ratingCount || '?'} değerlendirme)` : 'Puan yok';
-        const analysis = p.aiAnalysis ? `[AI: %${p.aiAnalysis.trustScore} güven, ${p.aiAnalysis.priceVerdict}]` : '';
-        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs} ${analysis}`;
+
+        let analysisBlock = '';
+        if (p.aiAnalysis) {
+          const a = p.aiAnalysis;
+          analysisBlock = `
+  → AI Analiz: %${a.trustScore} güven | ${a.priceVerdict} | ${a.authenticityRisk} risk
+  → Özet: ${a.summary || '-'}
+  → Gizli Gerçek: ${a.hiddenTruth || '-'}
+  → Artılar: ${(a.pros || []).join(', ')}
+  → Eksiler: ${(a.cons || []).join(', ')}`;
+        }
+
+        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}`;
       })
-      .join('\n');
+      .join('\n\n');
 
     const prompt = `Sen SyncBot'sun — bir grup alışveriş asistanısın. Kullanıcılar aşağıdaki ürünleri karşılaştırmak istiyor.
 
@@ -151,10 +162,22 @@ export async function generateFinalRecommendation(products, sessionData, answers
         const votes = sessionData.votes[p.id] || {};
         const ups = Object.values(votes).filter((v) => v.vote === 'up').length;
         const downs = Object.values(votes).filter((v) => v.vote === 'down').length;
-        const analysis = p.aiAnalysis ? `Güven: %${p.aiAnalysis.trustScore}, ${p.aiAnalysis.priceVerdict}` : '';
-        return `- ${p.name} (${p.price}₺, ⭐${p.ratingValue || '?'}, 👍${ups} 👎${downs}) ${analysis}`;
+        const rating = p.ratingValue ? `⭐${p.ratingValue}/5 (${p.ratingCount || '?'} değerlendirme)` : 'Puan yok';
+
+        let analysisBlock = '';
+        if (p.aiAnalysis) {
+          const a = p.aiAnalysis;
+          analysisBlock = `
+  → AI Analiz: %${a.trustScore} güven | ${a.priceVerdict} | ${a.authenticityRisk} risk
+  → Özet: ${a.summary || '-'}
+  → Gizli Gerçek: ${a.hiddenTruth || '-'}
+  → Artılar: ${(a.pros || []).join(', ')}
+  → Eksiler: ${(a.cons || []).join(', ')}`;
+        }
+
+        return `- ${p.name} | ${p.price}₺ | ${rating} | Grup oyları: 👍${ups} 👎${downs}${analysisBlock}`;
       })
-      .join('\n');
+      .join('\n\n');
 
     const answersContext = answers
       .map((a, i) => `Soru ${i + 1}: ${a.question} → Cevap: ${a.answer}`)
