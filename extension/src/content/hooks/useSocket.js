@@ -24,6 +24,7 @@ export function useSocket() {
   const socketRef = useRef(null);
   const [session, setSession] = useState(null);
   const [activeQuiz, setActiveQuiz] = useState(null);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [connected, setConnected] = useState(false);
   const [code, setCode] = useState('');
   const [userName, setUserName] = useState('');
@@ -152,6 +153,7 @@ export function useSocket() {
 
     socket.on('recommendation-questions', ({ productIds, questions }) => {
       setActiveQuiz({ productIds, questions });
+      setIsQuizLoading(false);
     });
 
     // Cleanup: component unmount olduğunda socket'i kapat
@@ -188,6 +190,7 @@ export function useSocket() {
   }, []);
 
   const requestRecommendation = useCallback((productIds) => {
+    setIsQuizLoading(true);
     socketRef.current?.emit('request-recommendation', { productIds });
   }, []);
 
@@ -227,6 +230,7 @@ export function useSocket() {
     code,
     activeQuiz,
     setActiveQuiz,
+    isQuizLoading,
     // Actions
     sendMessage,
     addProduct,

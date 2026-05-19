@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Bot, Send } from 'lucide-react';
 import QuestionCard from './QuestionCard.jsx';
 
-export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss }) {
+export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading }) {
   const [text, setText] = useState('');
   const [mentions, setMentions] = useState([]);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -107,13 +107,12 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
                 {isMe ? 'SEN' : msg.from.toUpperCase()}
               </span>
               <div
-                className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${
-                  isMe
+                className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-xs leading-relaxed break-words font-light ${isMe
                     ? 'bg-white text-black rounded-tr-sm shadow-md'
                     : isBot
-                    ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
-                    : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
-                }`}
+                      ? 'bg-white/10 text-white rounded-tl-sm border border-white/10'
+                      : 'bg-white/5 text-white/90 rounded-tl-sm border border-white/5'
+                  }`}
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
               />
             </div>
@@ -121,6 +120,24 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
         })}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Thinking Indicator */}
+      {isQuizLoading && !activeQuiz && (
+        <div className="mx-4 mb-3 animate-fade-in">
+          <div className="flex flex-col items-start">
+            <span className="text-[9px] font-medium text-white/40 uppercase tracking-widest mb-1.5 ml-1">SYNCBOT</span>
+            <div className="bg-white/10 rounded-xl rounded-tl-sm border border-white/10 px-4 py-3 flex items-center gap-2">
+              <Bot size={13} strokeWidth={1.25} className="text-white/50" />
+              <span className="text-[11px] text-white/50 font-light">Sorular hazırlanıyor</span>
+              <span className="flex gap-0.5 ml-1">
+                <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Question Card */}
       {activeQuiz && (
@@ -140,13 +157,11 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
               <button
                 key={m.name}
                 onClick={() => insertMention(m)}
-                className={`w-full px-4 py-2 flex items-center gap-2 text-xs text-left border-none cursor-pointer transition-colors ${
-                  i === mentionIndex ? 'bg-white/10 text-white' : 'bg-transparent text-white/50 hover:bg-white/5'
-                }`}
+                className={`w-full px-4 py-2 flex items-center gap-2 text-xs text-left border-none cursor-pointer transition-colors ${i === mentionIndex ? 'bg-white/10 text-white' : 'bg-transparent text-white/50 hover:bg-white/5'
+                  }`}
               >
-                <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium shrink-0 ${
-                  m.type === 'bot' ? 'bg-white/10 text-white' : 'bg-white/20 text-white'
-                }`}>
+                <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium shrink-0 ${m.type === 'bot' ? 'bg-white/10 text-white' : 'bg-white/20 text-white'
+                  }`}>
                   {m.type === 'bot' ? <Bot size={11} strokeWidth={1.25} /> : m.name[0].toUpperCase()}
                 </span>
                 <span className="font-medium">{m.name}</span>
