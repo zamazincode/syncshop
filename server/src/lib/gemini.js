@@ -24,7 +24,7 @@ export function initGemini() {
 export function getModel(options = {}) {
   if (!genAI) return null;
   return genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.0-pro',
     generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
     ...options,
   });
