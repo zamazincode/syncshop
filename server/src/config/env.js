@@ -22,6 +22,7 @@ export const env = {
   AI_PROVIDER: process.env.AI_PROVIDER || 'gemini', // 'groq' | 'gemini'
   AI_API_KEY: process.env.AI_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '', // Gemini backward compat
+  AI_MODEL: process.env.AI_MODEL || '', // Groq: 'deepseek-r1-distill-llama-70b' or 'llama-3.3-70b-versatile' | Gemini: 'gemini-2.5-flash' etc.
 
   // DB Config
   SUPABASE_URL: process.env.SUPABASE_URL || '',

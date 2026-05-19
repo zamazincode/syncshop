@@ -67,16 +67,16 @@ export function initAI() {
 
   try {
     if (provider === 'groq') {
-      // Groq: OpenAI SDK'yı Groq'un base URL'ine yönlendir
+      const model = env.AI_MODEL || 'llama-3.3-70b-versatile';
       groqClient = new OpenAI({
         apiKey,
         baseURL: 'https://api.groq.com/openai/v1',
       });
-      console.log('[AI] Groq initialized (llama-3.3-70b-versatile)');
+      console.log(`[AI] Groq initialized (${model})`);
     } else {
-      // Gemini: Google SDK kullan
+      const model = env.AI_MODEL || 'gemini-2.5-flash';
       geminiClient = new GoogleGenerativeAI(apiKey);
-      console.log('[AI] Gemini initialized (gemini-2.5-flash)');
+      console.log(`[AI] Gemini initialized (${model})`);
     }
     isConfigured = true;
   } catch (e) {
@@ -103,16 +103,18 @@ export async function generateText(prompt) {
 
   return withRetry(async () => {
     if (provider === 'groq') {
+      const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: modelName,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 2048,
       });
       return response.choices[0].message.content;
     } else {
+      const modelName = env.AI_MODEL || 'gemini-2.5-flash';
       const model = geminiClient.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: modelName,
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
       });
       const result = await model.generateContent(prompt);
@@ -139,8 +141,9 @@ export async function generateJSON(prompt) {
 
   return withRetry(async () => {
     if (provider === 'groq') {
+      const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: modelName,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 2048,
@@ -148,8 +151,9 @@ export async function generateJSON(prompt) {
       });
       return JSON.parse(response.choices[0].message.content);
     } else {
+      const modelName = env.AI_MODEL || 'gemini-2.5-flash';
       const model = geminiClient.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: modelName,
         generationConfig: { responseMimeType: 'application/json' },
       });
       const result = await model.generateContent(prompt);
