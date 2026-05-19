@@ -6,12 +6,53 @@ import { supabase } from '../lib/supabase.js';
 
 export const productVotes = new Map(); // productId -> { userId: { vote: 'up'|'down' } }
 
+/**
+ * Trendyol'un public component API'sinden ürün açıklamalarını çeker.
+ * Bu işlem server-side yapılıyor çünkü:
+ * 1. CORS sorunu yok (client-side fetch bazen başarısız oluyor)
+ * 2. Extension rebuild/cache'e bağımlılık yok
+ * 3. Her zaman çalışır
+ */
+async function fetchTrendyolDescription(productUrl) {
+  try {
+    const match = (productUrl || '').match(/-p-(\d+)/);
+    if (!match) return '';
+    const contentId = match[1];
+
+    const apiUrl = `https://apigw.trendyol.com/discovery-storefront-trproductgw-service/api/component-read/component/${contentId}?channelId=1`;
+    const res = await fetch(apiUrl, {
+      headers: { 'x-agentname': 'oz' },
+    });
+    if (!res.ok) {
+      console.log(`[Product] Description API returned ${res.status} for ${contentId}`);
+      return '';
+    }
+
+    const data = await res.json();
+    const descriptions = data.result?.descriptions || [];
+
+    // priority: 0 → satıcının yazdığı ürün açıklamaları (bullet points)
+    // Diğer priority değerleri (2, 4, 7, 1001...) → Trendyol'un politika metinleri, bunları istemiyoruz
+    const bulletPoints = descriptions
+      .filter((d) => d.priority === 0 && d.text)
+      .map((d) => d.text.trim())
+      .join('\n');
+
+    console.log(`[Product] Fetched description for ${contentId}: ${bulletPoints.length} chars`);
+    return bulletPoints;
+  } catch (e) {
+    console.error('[Product] Description fetch error:', e.message);
+    return '';
+  }
+}
+
 export function mapProductDbToFrontend(p) {
   if (!p) return null;
   return {
     ...p,
     imageUrl: p.image_url,
     productUrl: p.product_url,
+    description: p.description, // Yeni bağımsız sütun
     aiAnalysis: p.ai_analysis,
     ratingValue: p.rating_value || 0,
     ratingCount: p.rating_count || 0,
@@ -39,6 +80,12 @@ export async function addProduct(code, product, userName) {
     date: r.date,
   }));
 
+  // Description: client'tan geldiyse onu kullan, yoksa server-side API'den çek
+  let description = product.description || '';
+  if (!description && product.site === 'trendyol') {
+    description = await fetchTrendyolDescription(product.productUrl);
+  }
+
   const { data, error } = await supabase
     .from('products')
     .insert([{
@@ -50,7 +97,8 @@ export async function addProduct(code, product, userName) {
       site: product.site,
       rating_value: product.ratingValue || 0,
       rating_count: product.ratingCount || 0,
-      ai_analysis: product.description ? { description: product.description } : null,
+      description: description || null, // Yeni bağımsız sütun
+      ai_analysis: null, // Sadece analiz bitince doldurulacak
       raw_reviews: reviews.length > 0 ? reviews : null,
     }])
     .select()

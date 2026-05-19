@@ -1,10 +1,10 @@
-import { Home, X } from 'lucide-react';
+import { Home, X, ArrowLeftRight } from 'lucide-react';
 
 /**
  * Header — Sidebar üst bölümü
  * Logo, oda kodu badge'i ve kapatma butonu.
  */
-export default function Header({ code, onClose }) {
+export default function Header({ code, onClose, position, onTogglePosition }) {
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
   };
@@ -25,12 +25,21 @@ export default function Header({ code, onClose }) {
           </button>
         )}
       </div>
-      <button
-        onClick={onClose}
-        className="w-8 h-8 rounded-lg bg-transparent border border-white/5 flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer"
-      >
-        <X size={14} strokeWidth={1} />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onTogglePosition}
+          className="w-8 h-8 rounded-lg bg-transparent border border-white/5 flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer"
+          title={position === 'right' ? "Sola Taşı" : "Sağa Taşı"}
+        >
+          <ArrowLeftRight size={13} strokeWidth={1.25} />
+        </button>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg bg-transparent border border-white/5 flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all cursor-pointer"
+        >
+          <X size={14} strokeWidth={1} />
+        </button>
+      </div>
     </div>
   );
 }

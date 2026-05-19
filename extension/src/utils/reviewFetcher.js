@@ -158,3 +158,35 @@ export async function fetchTrendyolReviews(productUrl, productRating = 4.5) {
     return [];
   }
 }
+
+/**
+ * Trendyol public component API'sinden ürünün açıklama metinlerini (bullet points) çeker.
+ *
+ * @param {string} productUrl - Ürün sayfası URL'i
+ * @returns {Promise<string>} Açıklama metinleri
+ */
+export async function fetchTrendyolDescription(productUrl) {
+  try {
+    const match = productUrl.match(/-p-(\d+)/);
+    if (!match) return '';
+    const contentId = match[1];
+
+    const apiUrl = `https://apigw.trendyol.com/discovery-storefront-trproductgw-service/api/component-read/component/${contentId}?channelId=1`;
+    const res = await fetch(apiUrl);
+    if (!res.ok) return '';
+
+    const data = await res.json();
+    const descriptions = data.result?.descriptions || [];
+
+    // Sadece ürünün kendisine ait olan (priority: 0) açıklamaları alıyoruz
+    const bulletPoints = descriptions
+      .filter((d) => d.priority === 0 && d.text)
+      .map((d) => d.text.trim())
+      .join('\n');
+
+    return bulletPoints;
+  } catch (e) {
+    console.error('[DescFetcher] Error:', e.message);
+    return '';
+  }
+}

@@ -115,11 +115,22 @@ export function useSocket() {
     socket.on('ai-analysis', ({ productId, analysis }) => {
       setSession((prev) => {
         if (!prev) return prev;
-        const products = prev.products.map((p) =>
-          p.id === productId
-            ? { ...p, aiAnalysis: analysis, aiStatus: analysis ? 'done' : 'failed' }
-            : p
-        );
+        const products = prev.products.map((p) => {
+          if (p.id === productId) {
+            const oldDesc = p.aiAnalysis?.description;
+            let mergedAnalysis = null;
+            if (analysis) {
+              mergedAnalysis = { ...analysis };
+              if (oldDesc && !mergedAnalysis.description) {
+                mergedAnalysis.description = oldDesc;
+              }
+            } else if (oldDesc) {
+              mergedAnalysis = { description: oldDesc };
+            }
+            return { ...p, aiAnalysis: mergedAnalysis, aiStatus: analysis ? 'done' : 'failed' };
+          }
+          return p;
+        });
         return { ...prev, products };
       });
     });
@@ -206,6 +217,11 @@ export function useSocket() {
     socketRef.current?.emit('submit-recommendation-answers', { productIds, answers });
   }, []);
 
+  const dismissRecommendation = useCallback(() => {
+    setActiveQuiz(null);
+    socketRef.current?.emit('dismiss-recommendation');
+  }, []);
+
   const sendCursorUpdate = useCallback((x, y, pageUrl) => {
     // Note: To avoid react state overhead for high-frequency events, 
     // we use a direct emit here. We could also expose socketRef.
@@ -247,6 +263,7 @@ export function useSocket() {
     requestAnalysis,
     requestRecommendation,
     submitRecommendationAnswers,
+    dismissRecommendation,
     vote,
     sendBrowsingUpdate,
     sendCursorUpdate,

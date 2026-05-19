@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bot, ChevronRight, SkipForward, Pencil } from 'lucide-react';
+import { Bot, ChevronRight, SkipForward, Pencil, ArrowLeft } from 'lucide-react';
 
 /**
  * QuestionCard — Claude-style interactive question cards for AI recommendation flow.
@@ -15,6 +15,15 @@ export default function QuestionCard({ quiz, onComplete, onDismiss }) {
 
   const total = questions.length;
   const current = questions[currentIndex];
+
+  function handleBack() {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setAnswers(answers.slice(0, -1));
+      setShowCustom(false);
+      setCustomInput('');
+    }
+  }
 
   function handleSelect(option) {
     const newAnswers = [...answers, { question: current.question, answer: option }];
@@ -65,7 +74,17 @@ export default function QuestionCard({ quiz, onComplete, onDismiss }) {
             <Bot size={12} strokeWidth={1.5} className="text-white/50" />
             <span className="text-[9px] font-medium tracking-widest text-white/40 uppercase">SyncBot Soruyor</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            {currentIndex > 0 && (
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-0.5 text-[9px] text-white/30 hover:text-white/60 bg-transparent border-none cursor-pointer transition-colors"
+                title="Önceki soruya dön"
+              >
+                <ArrowLeft size={10} strokeWidth={2} />
+                <span>Geri</span>
+              </button>
+            )}
             <span className="text-[9px] font-medium text-white/30 tracking-wide">{currentIndex + 1} / {total}</span>
             <button
               onClick={onDismiss}

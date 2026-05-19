@@ -35,10 +35,11 @@ function getJsonLd() {
   return null;
 }
 
-/** OpenGraph meta tag'ini oku (og:title, og:image vb.) */
 function getMeta(prop) {
   return document.querySelector(`meta[property="${prop}"], meta[name="${prop}"]`)?.content;
 }
+
+
 
 /**
  * Trendyol ürün sayfasından bilgi çıkar.
@@ -81,6 +82,10 @@ export function extractTrendyol() {
     if (bigImg) imageUrl = bigImg.src;
   }
 
+  // Açıklama (description) burada çekilmez — Trendyol açıklamaları
+  // asenkron yüklüyor, DOM'da güvenilmez. Bunun yerine ürün eklenirken
+  // fetchTrendyolDescription() API çağrısı ile çekilir (bkz. App.jsx).
+
   return {
     name,
     price,
@@ -120,6 +125,33 @@ export function extractHepsiburada() {
   const imageUrl = getMeta('og:image') ||
     document.querySelector('img[data-test-id="product-image"], .product-image img')?.src || '';
 
+  // 1. Açıklama metnini çekiyoruz
+  const descEl = document.querySelector('#productDescriptionContent, [data-test-id="product-description"], .product-description');
+  let descText = descEl?.textContent?.replace(/\s+/g, ' ')?.trim() || '';
+
+  // 2. Teknik özellikleri çekiyoruz
+  const attrEl = document.querySelector('.tech-specs, #productTechSpecsContainer, .product-detail-content');
+  let attrText = attrEl?.textContent?.replace(/\s+/g, ' ')?.trim() || '';
+
+  // 3. Birleştiriyoruz
+  let description = '';
+  if (descText) {
+    description += descText;
+  }
+  if (attrText) {
+    description += (description ? '\n\nÖzellikler:\n' : '') + attrText;
+  }
+
+  // 4. Fallback
+  if (!description) {
+    const fallbackEl = document.querySelector('#tabProductDesc');
+    description = fallbackEl?.textContent?.replace(/\s+/g, ' ')?.trim() || '';
+  }
+
+  if (description.length > 1200) {
+    description = description.substring(0, 1200) + '...';
+  }
+
   return {
     name,
     price,
@@ -128,6 +160,7 @@ export function extractHepsiburada() {
     site: 'hepsiburada',
     ratingValue: ld?.aggregateRating?.ratingValue || 0,
     ratingCount: ld?.aggregateRating?.reviewCount || 0,
+    description,
   };
 }
 

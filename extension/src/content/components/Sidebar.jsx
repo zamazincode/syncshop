@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Header from './Header.jsx';
 import UsersTray from './UsersTray.jsx';
 import ProductList from './ProductList.jsx';
 import ChatPanel from './ChatPanel.jsx';
-import { Plug, ShoppingBag, MessageSquare, Eye } from 'lucide-react';
+import { Plug, ShoppingBag, MessageSquare, Eye, ChevronDown, ChevronUp, Bot } from 'lucide-react';
 
 /**
  * Sidebar — Ana sidebar container
@@ -18,10 +18,78 @@ export default function Sidebar({
   detectedProduct, isAdded, onAddProduct
 }) {
   const [activeTab, setActiveTab] = useState('chat');
+  const [width, setWidth] = useState(380);
+  const [position, setPosition] = useState('right');
+  const [productsCollapsed, setProductsCollapsed] = useState(true);
+
+  const isResizingRef = useRef(false);
 
   const products = session?.products || [];
   const messages = session?.messages || [];
   const votes = session?.votes || {};
+
+  // Load saved width/position
+  useEffect(() => {
+    chrome.storage.local.get(['ss_sidebarWidth', 'ss_sidebarPosition'], (data) => {
+      if (data.ss_sidebarWidth) setWidth(Number(data.ss_sidebarWidth));
+      if (data.ss_sidebarPosition) setPosition(data.ss_sidebarPosition);
+    });
+  }, []);
+
+  const togglePosition = useCallback(() => {
+    const newPos = position === 'right' ? 'left' : 'right';
+    setPosition(newPos);
+    chrome.storage.local.set({ ss_sidebarPosition: newPos });
+  }, [position]);
+
+  const widthRef = useRef(width);
+  const positionRef = useRef(position);
+
+  useEffect(() => {
+    widthRef.current = width;
+  }, [width]);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  // Resizing mouse events
+  const startResizing = useCallback((e) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizingRef.current) return;
+      let newWidth;
+      if (positionRef.current === 'right') {
+        newWidth = window.innerWidth - e.clientX - 16;
+      } else {
+        newWidth = e.clientX - 16;
+      }
+      newWidth = Math.max(320, Math.min(newWidth, 600));
+      setWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      if (isResizingRef.current) {
+        isResizingRef.current = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        chrome.storage.local.set({ ss_sidebarWidth: widthRef.current });
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   const unreadCount = activeTab !== 'chat' && messages.length > 0 ? '•' : '';
 
@@ -30,14 +98,38 @@ export default function Sidebar({
     onRequestRecommendation(productIds);
   }
 
+  const isRight = position === 'right';
+
+  const sidebarStyle = {
+    width: `${width}px`,
+    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    transitionProperty: 'left, right, transform, opacity',
+    ...(isRight
+      ? { right: isOpen ? '16px' : `-${width + 40}px`, left: 'auto' }
+      : { left: isOpen ? '16px' : `-${width + 40}px`, right: 'auto' }
+    )
+  };
+
   return (
     <div
-      className={`fixed top-4 bottom-4 w-[380px] bg-glass backdrop-blur-[24px] backdrop-saturate-[180%] border border-border rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col text-text font-sans z-[2147483647] overflow-hidden transition-all duration-600 ${
-        isOpen ? 'right-4' : '-right-[420px]'
-      }`}
-      style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+      className="fixed top-4 bottom-4 bg-glass backdrop-blur-[24px] backdrop-saturate-[180%] border border-border rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col text-text font-sans z-[2147483647] overflow-hidden transition-all duration-600"
+      style={sidebarStyle}
     >
-      <Header code={code} onClose={onClose} />
+      {/* ═══ RESIZE HANDLE ═══ */}
+      {isOpen && (
+        <div
+          onMouseDown={startResizing}
+          className={`absolute top-0 bottom-0 w-3 cursor-col-resize z-[99999] hover:bg-white/5 active:bg-white/10 transition-colors ${isRight ? 'left-0 border-l border-white/5' : 'right-0 border-r border-white/5'
+            }`}
+        />
+      )}
+
+      <Header
+        code={code}
+        onClose={onClose}
+        position={position}
+        onTogglePosition={togglePosition}
+      />
 
       {!connected ? (
         <div className="flex-1 flex flex-col items-center justify-center px-10 text-center opacity-70">
@@ -56,9 +148,8 @@ export default function Sidebar({
           <div className="flex px-6 gap-6 border-b border-white/5 shrink-0">
             <button
               onClick={() => setActiveTab('products')}
-              className={`py-4 text-[10px] font-medium uppercase tracking-[0.2em] relative cursor-pointer bg-transparent border-none flex items-center gap-2 ${
-                activeTab === 'products' ? 'text-white' : 'text-white/40 hover:text-white/70'
-              } transition-colors`}
+              className={`py-4 text-[10px] font-medium uppercase tracking-[0.2em] relative cursor-pointer bg-transparent border-none flex items-center gap-2 ${activeTab === 'products' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                } transition-colors`}
             >
               <ShoppingBag size={14} strokeWidth={1.25} /> KOLEKSİYON <span className="text-white/40 font-light">{products.length}</span>
               {activeTab === 'products' && (
@@ -67,9 +158,8 @@ export default function Sidebar({
             </button>
             <button
               onClick={() => setActiveTab('chat')}
-              className={`py-4 text-[10px] font-medium uppercase tracking-[0.2em] relative cursor-pointer bg-transparent border-none flex items-center gap-2 ${
-                activeTab === 'chat' ? 'text-white' : 'text-white/40 hover:text-white/70'
-              } transition-colors`}
+              className={`py-4 text-[10px] font-medium uppercase tracking-[0.2em] relative cursor-pointer bg-transparent border-none flex items-center gap-2 ${activeTab === 'chat' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                } transition-colors`}
             >
               <MessageSquare size={14} strokeWidth={1.25} /> MESAJLAR {unreadCount && <span className="text-white ml-1">{unreadCount}</span>}
               {activeTab === 'chat' && (
@@ -86,7 +176,7 @@ export default function Sidebar({
                   <span className="text-[9px] font-medium text-white/60 uppercase tracking-widest">Şu An İnceliyorsun</span>
                 </div>
                 <div className="text-[13px] font-normal text-white/90 truncate">{detectedProduct.name}</div>
-                <button 
+                <button
                   onClick={onAddProduct}
                   className="mt-1 w-full flex items-center justify-center gap-2 py-2 bg-white text-black rounded-lg text-[11px] font-medium tracking-wide transition-all cursor-pointer border border-transparent hover:bg-gray-200"
                 >
@@ -106,17 +196,86 @@ export default function Sidebar({
                 onRequestRecommendation={handleRequestRecommendation}
               />
             ) : (
-              <ChatPanel
-                messages={messages}
-                userName={userName}
-                users={users}
-                onSend={onSendMessage}
-                activeQuiz={activeQuiz}
-                onQuizComplete={onQuizComplete}
-                onQuizDismiss={onQuizDismiss}
-                isQuizLoading={isQuizLoading}
-                isBotThinking={isBotThinking}
-              />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Collapsible Mini Products Drawer */}
+                {products.length > 0 && (
+                  <div className="border-b border-white/5 bg-white/[0.01] shrink-0 flex flex-col overflow-hidden transition-all duration-300">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02]">
+                      <div className="flex items-center gap-1.5">
+                        <ShoppingBag size={12} className="text-white/50" />
+                        <span className="text-[9px] font-medium tracking-wider text-white/50 uppercase">
+                          Koleksiyon ({products.length} Ürün)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {products.length >= 2 && (
+                          <button
+                            onClick={() => handleRequestRecommendation(products.map(p => p.id))}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-white text-black text-[8px] font-semibold tracking-wider uppercase hover:bg-gray-200 transition-colors cursor-pointer border border-transparent"
+                          >
+                            <Bot size={10} /> AI Karşılaştır
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setProductsCollapsed(!productsCollapsed)}
+                          className="text-white/40 hover:text-white/80 bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center"
+                        >
+                          {productsCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Horizontal scroll list when expanded */}
+                    {!productsCollapsed && (
+                      <div className="flex gap-3 px-5 py-3 overflow-x-auto ss-scrollbar bg-black/10">
+                        {products.map((product) => {
+                          const productVotes = votes[product.id] || {};
+                          const yesCount = Object.values(productVotes).filter(v => v === 'yes').length;
+                          const noCount = Object.values(productVotes).filter(v => v === 'no').length;
+
+                          return (
+                            <div
+                              key={product.id}
+                              className="flex gap-2.5 p-2 rounded-xl bg-white/[0.02] border border-white/5 min-w-[170px] max-w-[170px] shrink-0 hover:border-white/10 transition-colors"
+                            >
+                              <img
+                                src={product.imageUrl || product.image}
+                                alt={product.name}
+                                className="w-10 h-10 object-cover rounded-lg bg-white/5 shrink-0"
+                              />
+                              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                <div className="text-[10px] text-white/80 font-light truncate" title={product.name}>
+                                  {product.name}
+                                </div>
+                                <div className="flex items-end justify-between">
+                                  <span className="text-[10px] font-medium text-white/50">{product.price}₺</span>
+                                  <div className="flex items-center gap-1.5 text-[8px] text-white/40">
+                                    <span className="flex items-center gap-0.5 text-emerald-400/80">👍{yesCount}</span>
+                                    <span className="flex items-center gap-0.5 text-rose-400/80">👎{noCount}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <ChatPanel
+                  messages={messages}
+                  userName={userName}
+                  users={users}
+                  onSend={onSendMessage}
+                  activeQuiz={activeQuiz}
+                  onQuizComplete={onQuizComplete}
+                  onQuizDismiss={onQuizDismiss}
+                  isQuizLoading={isQuizLoading}
+                  isBotThinking={isBotThinking}
+                />
+              </div>
             )}
           </div>
         </>

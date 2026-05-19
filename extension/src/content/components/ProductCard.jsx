@@ -3,6 +3,51 @@ import { fetchTrendyolReviews } from '../../utils/reviewFetcher.js';
 import { Package, Star, Bot, XCircle, RefreshCcw, Sparkles, ShieldCheck, Search, AlertTriangle, Eye, CheckCircle2, ThumbsUp, ThumbsDown, ExternalLink, Trash2, X } from 'lucide-react';
 
 /**
+ * ProConItem — Artılar ve Eksiler için tıklanabilir kaynakça gösteren satır
+ */
+function ProConItem({ item, type }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isPro = type === 'pro';
+
+  const text = typeof item === 'object' ? item.text : item;
+  const quotes = typeof item === 'object' && Array.isArray(item.quotes) ? item.quotes : [];
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-start gap-1.5 text-[10px] text-white/70">
+        <span className={isPro ? 'text-emerald-400 mt-0.5' : 'text-rose-400 mt-0.5'}>•</span>
+        {quotes.length > 0 ? (
+          <span
+            onClick={() => setIsOpen(!isOpen)}
+            className="cursor-pointer border-b border-dashed border-white/10 hover:border-white/30 hover:text-white transition-all pb-0.5 leading-normal"
+            title={`${quotes.length} adet kaynakça görmek için tıkla`}
+          >
+            {text}
+          </span>
+        ) : (
+          <span className="leading-normal">{text}</span>
+        )}
+      </div>
+      {isOpen && quotes.length > 0 && (
+        <div className="ml-3.5 pr-2 py-1.5 rounded bg-black/35 border border-white/5 text-[9px] text-white/45 italic leading-relaxed animate-fade-in space-y-1.5">
+          {quotes.map((q, idx) => (
+            <div key={idx} className="border-l border-white/10 pl-1.5">
+              {q.type === 'desc' ? (
+                <span className="not-italic font-medium text-white/60">ℹ️ {q.text}</span>
+              ) : (
+                <span>
+                  "{q.text}" {q.rating > 0 && <span className="text-[8px] text-warning/70 not-italic ml-0.5">({q.rating}★)</span>}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * ProductCard — Tek bir ürün kartı
  */
 export default function ProductCard({
@@ -10,7 +55,7 @@ export default function ProductCard({
   compareMode = false, isSelected = false, onToggleSelect
 }) {
   const p = product;
-  const a = p.aiAnalysis;
+  const a = p.aiAnalysis && (p.aiAnalysis.summary || p.aiAnalysis.trustScore) ? p.aiAnalysis : null;
 
   // Oy sayıları
   const upCount = Object.values(votes).filter((v) => v.vote === 'up').length;
@@ -30,9 +75,8 @@ export default function ProductCard({
   }
 
   return (
-    <div className={`bg-transparent border rounded-2xl p-4 transition-all hover:bg-white/[0.02] ${
-      compareMode && isSelected ? 'border-white/30 bg-white/[0.01]' : 'border-white/5 hover:border-white/10'
-    }`}>
+    <div className={`bg-transparent border rounded-2xl p-4 transition-all hover:bg-white/[0.02] ${compareMode && isSelected ? 'border-white/30 bg-white/[0.01]' : 'border-white/5 hover:border-white/10'
+      }`}>
       {/* ═══ HEADER: Image + Info ═══ */}
       <div className="flex gap-3 mb-4 items-center">
         {compareMode && (
@@ -48,9 +92,8 @@ export default function ProductCard({
             src={p.imageUrl}
             alt={p.name}
             onClick={compareMode ? onToggleSelect : () => setIsZoomed(true)}
-            className={`w-16 h-16 rounded-xl object-cover bg-black/20 shrink-0 border border-white/5 transition-opacity ${
-              compareMode ? 'cursor-pointer hover:opacity-90' : 'cursor-zoom-in hover:opacity-85'
-            }`}
+            className={`w-16 h-16 rounded-xl object-cover bg-black/20 shrink-0 border border-white/5 transition-opacity ${compareMode ? 'cursor-pointer hover:opacity-90' : 'cursor-zoom-in hover:opacity-85'
+              }`}
             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
           />
         ) : null}
@@ -107,10 +150,30 @@ export default function ProductCard({
             </div>
           </div>
 
-          <div>
-            <p className="text-[11px] text-white/50 font-light leading-relaxed">
+          <div className="space-y-1.5 text-[10px] text-white/50 font-light">
+            <p className="text-[11px] text-white/85 leading-relaxed italic mb-2.5">
               "{a.hiddenTruth || a.summary}"
             </p>
+            {a.pros && a.pros.length > 0 && (
+              <div className="flex flex-col gap-1.5 text-emerald-400/80">
+                <span className="text-[8px] bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-400 font-semibold shrink-0 tracking-wider w-max mb-0.5">ARTILAR</span>
+                <div className="flex flex-col gap-1">
+                  {a.pros.map((pro, idx) => (
+                    <ProConItem key={idx} item={pro} type="pro" />
+                  ))}
+                </div>
+              </div>
+            )}
+            {a.cons && a.cons.length > 0 && (
+              <div className="flex flex-col gap-1.5 text-rose-400/80 mt-2.5">
+                <span className="text-[8px] bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded text-rose-400 font-semibold shrink-0 tracking-wider w-max mb-0.5">EKSİLER</span>
+                <div className="flex flex-col gap-1">
+                  {a.cons.map((con, idx) => (
+                    <ProConItem key={idx} item={con} type="con" />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {a.authenticityRisk && (
@@ -128,8 +191,14 @@ export default function ProductCard({
                     a.authenticityRisk === 'Medium' ? 'Şüpheli' : 'Güvenilir'}
                 </span>
               </div>
-              <div className="font-light text-white/30 text-[9px] leading-relaxed pl-3.5">{a.authenticityReason}</div>
             </div>
+          )}
+
+
+          {a.details && (
+            <p className="text-[10px] text-white/40 leading-relaxed pt-2.5 mt-1 border-t border-white/5 font-light">
+              {a.details}
+            </p>
           )}
         </div>
       )}

@@ -2,11 +2,16 @@ import {
   joinSession, getSession,
   addMessage, updateUserPage, removeUser,
 } from '../services/session.js';
-import { addProduct, removeProduct, voteProduct, updateProductAnalysis } from '../services/product.js';
+import { addProduct, removeProduct, voteProduct, updateProductAnalysis, mapProductDbToFrontend } from '../services/product.js';
 import { handleChat, runAI, analyzeProduct, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
+import { supabase } from '../lib/supabase.js';
 
 // Global map to track disconnect timers across socket connections (e.g. page refreshes)
 const disconnectTimers = new Map(); // "room:userId" -> timeoutId
+
+// Global map to track active recommendation quizzes (e.g. page refreshes)
+const activeQuizzes = new Map(); // "room:userId" -> { productIds, questions }
+
 
 export function registerHandlers(io, socket) {
   let currentRoom = null;
@@ -34,6 +39,13 @@ export function registerHandlers(io, socket) {
     }
 
     callback?.({ session, userId: finalUserId });
+
+    // Send active quiz if this user had one in progress
+    const quizKey = `${code}:${finalUserId}`;
+    if (activeQuizzes.has(quizKey)) {
+      const activeQuiz = activeQuizzes.get(quizKey);
+      socket.emit('recommendation-questions', activeQuiz);
+    }
 
     const fullSession = await getSession(code);
     io.to(currentRoom).emit('user-joined', { users: fullSession.users });
@@ -109,11 +121,17 @@ export function registerHandlers(io, socket) {
         return;
       }
 
-      // Send structured questions directly to all clients (no summary message)
-      io.to(currentRoom).emit('recommendation-questions', {
+      const quizData = {
         productIds,
         questions: result.questions,
-      });
+      };
+
+      // Save to active quizzes map
+      const quizKey = `${currentRoom}:${currentUserId}`;
+      activeQuizzes.set(quizKey, quizData);
+
+      // Send structured questions ONLY to the initiating client
+      socket.emit('recommendation-questions', quizData);
     } catch (err) {
       console.error('[Socket] request-recommendation error:', err);
     }
@@ -133,9 +151,20 @@ export function registerHandlers(io, socket) {
       const finalResponse = await generateFinalRecommendation(targetProducts, session, answers);
       const botMsg = await addMessage(currentRoom, finalResponse, 'SyncBot');
       io.to(currentRoom).emit('message', botMsg);
+
+      // Clean up active quiz for this user
+      const quizKey = `${currentRoom}:${currentUserId}`;
+      activeQuizzes.delete(quizKey);
     } catch (err) {
       console.error('[Socket] submit-recommendation-answers error:', err);
     }
+  });
+
+  socket.on('dismiss-recommendation', () => {
+    if (!currentRoom || !currentUserId) return;
+    const quizKey = `${currentRoom}:${currentUserId}`;
+    activeQuizzes.delete(quizKey);
+    console.log(`[Socket] dismiss-recommendation: quiz cleared for user ${currentUserId} in room ${currentRoom}`);
   });
 
   // ═══════════════════════════════════════
@@ -144,6 +173,7 @@ export function registerHandlers(io, socket) {
   socket.on('add-product', async ({ product }) => {
     if (!currentRoom) return;
     console.log(`[Socket] add-product: ${product.name}`);
+    console.log(`[Socket] description length: ${(product.description || '').length}, preview: ${(product.description || '').substring(0, 100)}`);
 
     const newProduct = await addProduct(currentRoom, product, currentUserName);
     if (newProduct) {
@@ -162,8 +192,24 @@ export function registerHandlers(io, socket) {
   socket.on('request-analysis', async ({ product, reviews }) => {
     if (!currentRoom) return;
     console.log(`[Socket] request-analysis: ${product.name}`);
-    product.reviews = reviews;
-    runAI(io, currentRoom, product);
+
+    // Veritabanından en güncel ürünü çekip açıklamayı kaybetmediğimizden emin oluyoruz
+    const { data: dbProduct } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', product.id)
+      .single();
+
+    const mergedProduct = dbProduct
+      ? mapProductDbToFrontend(dbProduct)
+      : product;
+
+    // Debug: description izleme
+    const desc = mergedProduct.description || mergedProduct.aiAnalysis?.description || '';
+    console.log(`[Socket] analysis desc source: description=${!!mergedProduct.description}, aiAnalysis.description=${!!mergedProduct.aiAnalysis?.description}, length=${desc.length}`);
+
+    mergedProduct.reviews = reviews;
+    runAI(io, currentRoom, mergedProduct);
   });
 
   // ═══════════════════════════════════════
@@ -226,6 +272,10 @@ export function registerHandlers(io, socket) {
         removeUser(room, uid);
         io.to(room).emit('user-left', { userId: uid });
         disconnectTimers.delete(key);
+
+        // Clean up active quiz for the departed user
+        activeQuizzes.delete(key);
+        console.log(`[Socket] User ${uid} left session ${room}, cleared active quiz.`);
       }, 5000);
 
       disconnectTimers.set(key, timer);

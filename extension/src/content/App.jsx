@@ -3,7 +3,7 @@ import { useSocket } from './hooks/useSocket.js';
 import { useProductDetector } from './hooks/useProductDetector.js';
 import Sidebar from './components/Sidebar.jsx';
 import Fab from './components/Fab.jsx';
-import { fetchTrendyolReviews } from '../utils/reviewFetcher.js';
+import { fetchTrendyolReviews, fetchTrendyolDescription } from '../utils/reviewFetcher.js';
 
 import CursorOverlay from './components/CursorOverlay.jsx';
 
@@ -15,7 +15,7 @@ export default function App() {
     session, connected, userId, userName, code, socket,
     sendMessage, addProduct, removeProduct, requestAnalysis, requestRecommendation, vote,
     sendBrowsingUpdate, sendCursorUpdate, setSession,
-    activeQuiz, setActiveQuiz, submitRecommendationAnswers, isQuizLoading, isBotThinking,
+    activeQuiz, setActiveQuiz, submitRecommendationAnswers, dismissRecommendation, isQuizLoading, isBotThinking,
   } = useSocket();
 
   const { detectedProduct } = useProductDetector({
@@ -33,19 +33,28 @@ export default function App() {
   async function handleAddProduct() {
     if (!detectedProduct || !connected) return;
 
-    // Fetch reviews while adding (non-blocking for UI)
     let reviews = [];
+    let apiDescription = '';
+
     if (detectedProduct.site === 'trendyol') {
-      console.log('[SyncShop] Scraping reviews for:', detectedProduct.productUrl);
+      console.log('[SyncShop] Fetching reviews + description for:', detectedProduct.productUrl);
       try {
-        reviews = await fetchTrendyolReviews(detectedProduct.productUrl, detectedProduct.ratingValue);
-        console.log(`[SyncShop] Scraped ${reviews.length} reviews successfully.`);
+        // Yorumları ve açıklamayı paralel olarak çek — ikisi birbirinden bağımsız
+        const [fetchedReviews, fetchedDesc] = await Promise.all([
+          fetchTrendyolReviews(detectedProduct.productUrl, detectedProduct.ratingValue).catch(() => []),
+          fetchTrendyolDescription(detectedProduct.productUrl).catch(() => ''),
+        ]);
+        reviews = fetchedReviews;
+        apiDescription = fetchedDesc;
+        console.log(`[SyncShop] Scraped ${reviews.length} reviews, description length: ${apiDescription.length}`);
       } catch (err) {
-        console.error('[SyncShop] Review scraping error:', err);
+        console.error('[SyncShop] Review/description fetching error:', err);
       }
     }
 
-    addProduct({ ...detectedProduct, reviews });
+    // Açıklama için SADECE API kullan — DOM güvenilmez çünkü Trendyol
+    // açıklamaları asenkron yüklüyor, sayfa DOM'unda genelde boş geliyor.
+    addProduct({ ...detectedProduct, description: apiDescription || '', reviews });
     setAddedUrls((prev) => new Set(prev).add(detectedProduct.productUrl));
   }
 
@@ -101,7 +110,7 @@ export default function App() {
           submitRecommendationAnswers(productIds, answers);
           setActiveQuiz(null);
         }}
-        onQuizDismiss={() => setActiveQuiz(null)}
+        onQuizDismiss={dismissRecommendation}
         isQuizLoading={isQuizLoading}
         isBotThinking={isBotThinking}
         detectedProduct={detectedProduct}

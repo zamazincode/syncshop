@@ -40,19 +40,25 @@ function getReviews(product) {
 // PRODUCT ANALYZER
 // ═══════════════════════════════════════
 
-export async function analyzeProduct(product) {
+export async function analyzeProduct(product, passedReviews = null) {
   if (!isAIReady()) return null;
 
   try {
-    const prompt = `GÖREV: Bu ürünü ve kullanıcı yorumlarını analiz et.
+    const productDesc = product.description || product.aiAnalysis?.description || '';
+    const raw = passedReviews || getReviews(product);
+    const selectedReviews = raw
+      .filter((r) => r.text && r.text.split(/\s+/).length > 5)
+      .slice(0, 20);
+
+    const prompt = `GÖREV: Bu ürünü, özelliklerini ve kullanıcı yorumlarını analiz et.
 Ürün: ${product.name}
 Fiyat: ${product.price}₺
 Genel Puan: ${product.ratingValue || 'Bilinmiyor'} / 5 (Toplam ${product.ratingCount || 'Bilinmiyor'} değerlendirme)
+${productDesc ? `\nÜRÜN ÖZELLİKLERİ / DETAYLARI:\n${productDesc}\n` : ''}
 
-Aşağıdaki kullanıcı yorumları, en kritik örneklerin sıkıştırılmış halidir:
-${getReviews(product)
-        .filter((r) => r.text && r.text.split(/\s+/).length > 5)
-        .map((r) => `[${r.rating}★ ${r.date?.split(' ').slice(-2).join(' ') || '?'}] ${r.text.substring(0, 150)}`)
+Aşağıdaki kullanıcı yorumları, [Yorum #indeks] şeklinde numaralandırılmıştır:
+${selectedReviews
+        .map((r, idx) => `[Yorum #${idx}] [${r.rating}★] ${r.text.substring(0, 150)}`)
         .join('\n')}
 
 DİKKAT: Ürünün genel kalitesini ve 'Olumlu' oranını (positivePercent) belirlerken SADECE bu yorumlara değil, yukarıdaki 'Genel Puan'a öncelik ver.
@@ -62,29 +68,85 @@ SENİN SÜPER GÜCÜN:
 2. SATICI GÜVENİ: "Sahte ürün", "Barkod okumuyor" gibi kırmızı bayraklar.
 3. GİZLİ GERÇEKLER: Açıklama-yorum çelişkileri.
 
-ÖNEMLİ KURAL: Yanıtındaki tüm alanlar (özet, gizli gerçek, artılar, eksiler vb.) %100 TÜRKÇE olmalıdır. İngilizce terimler (Örn: "gift inside", "packaging", "delivery" gibi) karıştırma. Tamamen doğal Türkçe ifadeler kullan.
+ÖNEMLİ KURALLAR:
+1. Yanıtındaki tüm alanlar %100 TÜRKÇE olmalıdır. İngilizce terimler karıştırma.
+2. Kesinlikle dolaylı, resmi ve uzun akademik cümleler kurma (örn: "Olumlu yorumlar genelde..." gibi gereksiz laf kalabalığı YASAKTIR).
+3. Doğrudan, samimi ve arkadaşça bir ton kullan. 3 saniyede karar verdirecek kadar net ol.
+4. JSON YAZIM KURALI: JSON anahtarları (keys) ve dış sınır tırnakları KESİNLİKLE standart çift tırnak (") ile sarılmalıdır (örn: "summary": "değer"). Ancak, tırnak içerisine yazdığın Türkçe metinlerin KENDİ İÇİNDE kesinlikle çift tırnak (") kullanma, sadece tek tırnak (') kullan (Örn: "summary": "Şarj kablosu 'kırılgan' yapıda" gibi).
+5. KAYNAKÇA EŞLEŞTİRME KURALI: Artılar ve Eksiler listesindeki her bir maddeyi destekleyen kaynakları "sources" dizisine ekle.
+   - Eğer destekleyen kaynak bir kullanıcı yorumu ise, o yorumun indeks numarasını yaz (Örn: 0, 1, 2).
+   - Eğer destekleyen kaynak ürün özellikleri/açıklaması ise, "desc" kelimesini ekle (Örn: "desc").
+   - Birden fazla kaynak varsa hepsini ekle (Örn: [0, 2, "desc"]). Kaynak bulamadıysan boş dizi bırak.
+6. BAŞLIK KALİTESİ: Artı ve eksi maddeleri KESİNLİKLE robotik veya aşırı kısa kuru kelimelerden oluşmamalıdır (Örn: 'hızlı teslim' yerine 'Kargo teslimatı hızlıydı', 'bağlantı sorunu' yerine 'Wi-Fi bağlantısı sık kopuyor' gibi). Doğal, net ve ne olduğu tam anlaşılan 4-12 kelimelik ifadeler kullan.
+7. SIKLIK/FREKANS KURALI: Artılar ve Eksiler listesine eklediğin maddelerin KESİNLİKLE sadece tek bir kullanıcının münferit şikayeti/övgüsü olmadığından emin ol. Birden fazla yorumda tekrarlanan (frekansı yüksek) ortak eğilimleri listele. İstisna: Eğer şikayet 'sahte ürün', 'dolandırıcılık', 'bozuk/kırık teslim' veya 'sağlık riski' gibi çok kritik bir kırmızı bayrak ise tek bir yorumda bile geçse Eksiler'e ekleyebilirsin.
 
 SADECE aşağıdaki JSON formatında yanıt ver:
 {
-  "summary": "Ürünün ve satıcının kısa özeti (max 2 cümle)",
-  "hiddenTruth": "Yorumların satır aralarındaki gizli gerçek",
+  "summary": "Ürün hakkında 3 saniyede karar verdirecek, samimi ve son derece kısa net özet (en fazla 12 kelime)",
+  "hiddenTruth": "Satır aralarındaki en büyük risk veya gizli gerçek (en fazla 12 kelime)",
+  "details": "Bu sonuca nasıl ulaşıldığını açıklayan, yorumlardaki genel eğilimi özetleyen 1-2 açıklayıcı cümle (en fazla 25 kelime)",
   "trustScore": 85,
   "authenticityRisk": "Low | Medium | High",
-  "authenticityReason": "Neden bu risk seviyesi verildi?",
-  "idealFor": "Bu ürünü alması gereken kullanıcı profili",
-  "notFor": "Bu üründen uzak durması gereken kullanıcı profili",
-  "pros": ["artı 1", "artı 2"],
-  "cons": ["eksi 1", "eksi 2"],
+  "authenticityReason": "Neden bu risk seviyesi verildi? (en fazla 15 kelime)",
+  "idealFor": "Bu ürünü alması gereken kullanıcı profili (en fazla 8 kelime)",
+  "notFor": "Bu üründen uzak durması gereken kullanıcı profili (en fazla 8 kelime)",
+  "pros": [
+    { "text": "artı 1 (net ve ne olduğu anlaşılan, robotik olmayan 4-12 kelimelik kısa başlık)", "sources": [0, 1] },
+    { "text": "artı 2 (net ve ne olduğu anlaşılan, robotik olmayan 4-12 kelimelik kısa başlık)", "sources": ["desc"] }
+  ],
+  "cons": [
+    { "text": "eksi 1 (net ve ne olduğu anlaşılan, robotik olmayan 4-12 kelimelik kısa başlık)", "sources": [2] },
+    { "text": "eksi 2 (net ve ne olduğu anlaşılan, robotik olmayan 4-12 kelimelik kısa başlık)", "sources": [3, "desc"] }
+  ],
   "priceVerdict": "Fiyat değerlendirmesi (Pahalı/Uygun/Fırsat)",
   "positivePercent": 90
 }`;
 
-    return await generateJSON(prompt);
+    console.log('\n[AI] ═══ ANALYZE PRODUCT PROMPT ═══');
+    console.log(prompt);
+    console.log('[AI] ═══ END PROMPT ═══\n');
+
+    const result = await generateJSON(prompt);
+
+    if (result) {
+      const mapSources = (items) => {
+        if (!Array.isArray(items)) return [];
+        return items.map((item) => {
+          const quotes = [];
+          if (Array.isArray(item.sources)) {
+            item.sources.forEach((src) => {
+              if (src === 'desc' && productDesc) {
+                quotes.push({
+                  type: 'desc',
+                  text: 'Ürün açıklamasında belirtilen teknik detay.'
+                });
+              } else if (typeof src === 'number' && selectedReviews[src]) {
+                quotes.push({
+                  type: 'review',
+                  text: selectedReviews[src].text, // FULL text!
+                  rating: selectedReviews[src].rating
+                });
+              }
+            });
+          }
+          return {
+            text: item.text,
+            quotes
+          };
+        });
+      };
+
+      result.pros = mapSources(result.pros);
+      result.cons = mapSources(result.cons);
+    }
+
+    return result;
   } catch (e) {
     console.error('[AI] Analysis error:', e.message);
     return null;
   }
 }
+
 
 // ═══════════════════════════════════════
 // CHAT HANDLER (@SyncBot)
@@ -251,11 +313,14 @@ KULLANICI TERCİHLERİ:
 ${answersContext}
 
 GÖREVLERİN:
-1. Kullanıcının cevaplarına göre en uygun ürünü seç ve neden onu seçtiğini kısa açıkla.
-2. Grup oylarını (👍/👎) da dikkate al — çok oy almış ürüne öncelik ver.
-3. İkinci en iyi alternatifi de belirt.
-4. Kısa, samimi, enerjik ve Türkçe yaz. Markdown formatını kullan. Emoji kullan ama abartma.
-5. Max 150 kelime.`;
+1. Yanıtının EN BAŞINDA kullanıcıların ürünleri doğrudan karşılaştırabilmesi için tam olarak aşağıdaki formatta bir Markdown Tablosu oluştur:
+| Ürün | Karar | Eşleşme Nedeni | Fiyat & Oylar |
+| --- | --- | --- | --- |
+| [Kısa Ürün Adı 1] | 🏆 En Uygun Seçim | [Neden bu kişiye uygun?] | [Fiyat]₺ - 👍[Up] 👎[Down] |
+| [Kısa Ürün Adı 2] | 🥈 En İyi Alternatif | [Neden alternatif?] | [Fiyat]₺ - 👍[Up] 👎[Down] |
+
+2. Tablonun altına EN FAZLA 2-3 cümlelik son derece kısa, samimi ve Türkçe bir özet yaz.
+3. Karar verirken kullanıcıların bütçe, kullanım amacı cevaplarını ve odadaki grup oylarını (👍/👎) göz önünde bulundur.`;
 
     console.log('\n[AI] ═══ FINAL RECOMMENDATION PROMPT ═══');
     console.log(prompt);
@@ -294,21 +359,24 @@ export async function runAI(io, roomCode, product) {
     await updateProductAnalysis(product.id, null, compressedText);
 
     console.log(`[AI] Analyzing product: ${product.name}`);
-    const analysis = await analyzeProduct(product);
+    const analysis = await analyzeProduct(product, selectedReviews);
 
     if (analysis) {
       // Send analysis data to UI
       io.to(roomCode).emit('ai-analysis', { productId: product.id, analysis });
 
       // Send readable summary to chat
+      const prosList = Array.isArray(analysis.pros) ? analysis.pros.map(p => p.text).join(', ') : '';
+      const consList = Array.isArray(analysis.cons) ? analysis.cons.map(c => c.text).join(', ') : '';
+
       const analysisMsg =
         `✨ **AI Derin Analizi: ${product.name}**\n\n` +
         `📝 ${analysis.summary}\n\n` +
         `🕵️‍♂️ **Gizli Gerçek:** ${analysis.hiddenTruth}\n\n` +
         `🎯 **Kimin İçin İdeal:** ${analysis.idealFor}\n` +
         `⚠️ **Kim Uzak Durmalı:** ${analysis.notFor}\n\n` +
-        `✅ **Artılar:** ${analysis.pros.join(', ')}\n` +
-        `❌ **Eksiler:** ${analysis.cons.join(', ')}\n\n` +
+        `✅ **Artılar:** ${prosList}\n` +
+        `❌ **Eksiler:** ${consList}\n\n` +
         `⚖️ **Karar:** ${analysis.priceVerdict} (Güven: %${analysis.trustScore} - Olumlu: %${analysis.positivePercent})`;
 
       const botMsg = await addMessage(roomCode, analysisMsg, 'SyncBot');
@@ -328,3 +396,4 @@ export async function runAI(io, roomCode, product) {
     console.error('[AI] runAI error:', err);
   }
 }
+// Hot-reload trigger for gpt-oss-120b model changes

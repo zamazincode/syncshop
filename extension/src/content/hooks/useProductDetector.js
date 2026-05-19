@@ -26,10 +26,20 @@ export function useProductDetector({ connected, sendBrowsingUpdate }) {
         return;
       }
 
-      if (product.productUrl !== lastUrlRef.current) {
-        lastUrlRef.current = product.productUrl;
-        setDetectedProduct(product);
-      }
+      setDetectedProduct((prev) => {
+        if (!prev) {
+          lastUrlRef.current = product.productUrl;
+          return product;
+        }
+        if (product.productUrl !== lastUrlRef.current) {
+          lastUrlRef.current = product.productUrl;
+          return product;
+        }
+        if (!prev.description && product.description) {
+          return { ...prev, description: product.description };
+        }
+        return prev;
+      });
     }, 2000);
 
     return () => clearInterval(interval);

@@ -88,9 +88,57 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
     }
   }
 
+  function generateTableHTML(rows) {
+    if (rows.length === 0) return '';
+    const headers = rows[0];
+    const bodyRows = rows.slice(1);
+
+    const headerHTML = headers.map(h => `<th style="text-align: left; padding: 8px 10px; font-weight: 600; text-transform: uppercase; font-size: 8px; letter-spacing: 0.05em; color: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); white-space: nowrap;">${h}</th>`).join('');
+    
+    const bodyHTML = bodyRows.map((row, rIdx) => {
+      const bg = rIdx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent';
+      return `<tr style="background: ${bg};">` + 
+        row.map(cell => `<td style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 300; white-space: nowrap;">${cell}</td>`).join('') + 
+        `</tr>`;
+    }).join('');
+
+    return `<div style="overflow-x: auto; margin: 12px 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: rgba(10,10,12,0.4);"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead><tr>${headerHTML}</tr></thead><tbody>${bodyHTML}</tbody></table></div>`;
+  }
+
   function renderMarkdown(rawText) {
     if (!rawText) return '';
     let html = rawText;
+
+    // Parse markdown tables
+    const lines = html.split('\n');
+    let inTable = false;
+    let tableRows = [];
+    let newLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('|') && line.endsWith('|')) {
+        if (!inTable) {
+          inTable = true;
+          tableRows = [];
+        }
+        // Skip separator rows
+        if (!line.includes('---')) {
+          const cells = line.split('|').map(c => c.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+          tableRows.push(cells);
+        }
+      } else {
+        if (inTable) {
+          inTable = false;
+          newLines.push(generateTableHTML(tableRows));
+        }
+        newLines.push(lines[i]);
+      }
+    }
+    if (inTable) {
+      newLines.push(generateTableHTML(tableRows));
+    }
+    html = newLines.join('\n');
 
     // Headings (match lines starting with #, ##, ###)
     html = html.replace(/^### (.*?)$/gm, '<h3 style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 10px; margin-bottom: 4px">$1</h3>');

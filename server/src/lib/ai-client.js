@@ -40,7 +40,7 @@ async function withRetry(fn) {
       return await fn();
     } catch (err) {
       const msg = err.message || '';
-      const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('overloaded') || msg.includes('high demand');
+      const isRetryable = msg.includes('503') || msg.includes('429') || msg.includes('overloaded') || msg.includes('high demand') || msg.includes('JSON') || msg.includes('control character') || msg.includes('Unexpected') || msg.includes('token');
 
       if (isRetryable && attempt < MAX_RETRIES) {
         const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
@@ -148,6 +148,50 @@ export async function generateText(prompt) {
 // UNIFIED API — generateJSON
 // ═══════════════════════════════════════
 
+function safeJSONParse(text) {
+  if (!text) {
+    throw new Error('503 Model returned an empty response');
+  }
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Parsed content is not a valid JSON object');
+    }
+    return parsed;
+  } catch (err) {
+    console.warn('[AI] JSON Parse failed, attempting to clean text...', err.message);
+    let cleaned = String(text).trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+    cleaned = cleaned.trim();
+
+    // Repair single-quoted keys: 'key': -> "key":
+    cleaned = cleaned.replace(/'([^']*)'\s*:/g, '"$1":');
+    // Repair single-quoted values: : 'value' -> : "value"
+    cleaned = cleaned.replace(/:\s*'([^']*)'/g, (match, p1) => {
+      const escaped = p1.replace(/"/g, '\\"');
+      return `: "${escaped}"`;
+    });
+
+    try {
+      const parsed2 = JSON.parse(cleaned);
+      if (!parsed2 || typeof parsed2 !== 'object') {
+        throw new Error('Parsed content is not a valid JSON object after cleaning');
+      }
+      return parsed2;
+    } catch (e) {
+      console.error('[AI] Raw faulty JSON output from model:\n', text);
+      throw e;
+    }
+  }
+}
+
 /**
  * JSON formatında yanıt üret (product analysis için).
  *
@@ -170,7 +214,7 @@ export async function generateJSON(prompt) {
         max_tokens: 2048,
         response_format: { type: 'json_object' },
       });
-      return JSON.parse(response.choices[0].message.content);
+      return safeJSONParse(response.choices[0].message.content);
     } else if (provider === 'groq') {
       const modelName = env.AI_MODEL || 'llama-3.3-70b-versatile';
       const response = await groqClient.chat.completions.create({
@@ -180,7 +224,7 @@ export async function generateJSON(prompt) {
         max_tokens: 2048,
         response_format: { type: 'json_object' },
       });
-      return JSON.parse(response.choices[0].message.content);
+      return safeJSONParse(response.choices[0].message.content);
     } else {
       const modelName = env.AI_MODEL || 'gemini-2.5-flash';
       const model = geminiClient.getGenerativeModel({
@@ -188,7 +232,7 @@ export async function generateJSON(prompt) {
         generationConfig: { responseMimeType: 'application/json' },
       });
       const result = await model.generateContent(prompt);
-      return JSON.parse(result.response.text());
+      return safeJSONParse(result.response.text());
     }
   });
 }
