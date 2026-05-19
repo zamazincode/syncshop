@@ -1,6 +1,6 @@
 import {
   joinSession, getSession,
-  addMessage, updateUserPage, removeUser, checkEmptySession, setUserOffline
+  addMessage, updateUserPage, removeUser, checkEmptySession
 } from '../services/session.js';
 import { addProduct, removeProduct, voteProduct, updateProductAnalysis, mapProductDbToFrontend } from '../services/product.js';
 import { handleChat, runAI, analyzeProduct, generateRecommendationQuestions, generateFinalRecommendation } from '../services/ai.js';
@@ -302,9 +302,8 @@ export function registerHandlers(io, socket) {
       }
 
       const timer = setTimeout(async () => {
-        setUserOffline(room, uid);
-        const fullSession = await getSession(room);
-        io.to(room).emit('user-joined', { users: fullSession.users });
+        removeUser(room, uid);
+        io.to(room).emit('user-left', { userId: uid });
 
         const leaveMsg = await addMessage(room, `👋 **${userName}** ayrıldı.`, 'SyncBot', true);
         io.to(room).emit('message', leaveMsg);
@@ -313,7 +312,7 @@ export function registerHandlers(io, socket) {
 
         // Clean up active quiz for the departed user
         activeQuizzes.delete(key);
-        console.log(`[Socket] User ${uid} went offline in session ${room}`);
+        console.log(`[Socket] User ${uid} left session ${room}`);
         
         checkEmptySession(room);
       }, 5000);
