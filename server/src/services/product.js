@@ -25,6 +25,8 @@ export async function addProduct(code, product, userName) {
       image_url: product.imageUrl,
       product_url: url,
       site: product.site,
+      rating_value: product.ratingValue || 0,
+      rating_count: product.ratingCount || 0,
       ai_analysis: product.description ? { description: product.description } : null,
       raw_reviews: reviews.length > 0 ? reviews : null,
     }])

@@ -25,6 +25,7 @@ export function useSocket() {
   const [session, setSession] = useState(null);
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [isBotThinking, setIsBotThinking] = useState(false);
   const [connected, setConnected] = useState(false);
   const [code, setCode] = useState('');
   const [userName, setUserName] = useState('');
@@ -99,6 +100,9 @@ export function useSocket() {
         if (!prev) return prev;
         return { ...prev, messages: [...prev.messages, msg] };
       });
+      if (msg.from === 'SyncBot') {
+        setIsBotThinking(false);
+      }
     });
 
     socket.on('vote-update', ({ productId, votes }) => {
@@ -167,6 +171,9 @@ export function useSocket() {
 
   const sendMessage = useCallback((text) => {
     socketRef.current?.emit('send-message', { text });
+    if (text.toLowerCase().includes('@syncbot')) {
+      setIsBotThinking(true);
+    }
   }, []);
 
   const addProduct = useCallback((product) => {
@@ -195,6 +202,7 @@ export function useSocket() {
   }, []);
 
   const submitRecommendationAnswers = useCallback((productIds, answers) => {
+    setIsBotThinking(true);
     socketRef.current?.emit('submit-recommendation-answers', { productIds, answers });
   }, []);
 
@@ -231,6 +239,7 @@ export function useSocket() {
     activeQuiz,
     setActiveQuiz,
     isQuizLoading,
+    isBotThinking,
     // Actions
     sendMessage,
     addProduct,

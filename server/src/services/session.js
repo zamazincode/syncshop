@@ -99,6 +99,8 @@ export async function getSession(code) {
     imageUrl: p.image_url,
     productUrl: p.product_url,
     aiAnalysis: p.ai_analysis,
+    ratingValue: p.rating_value || 0,
+    ratingCount: p.rating_count || 0,
   }));
 
   // Fetch votes from in-memory map

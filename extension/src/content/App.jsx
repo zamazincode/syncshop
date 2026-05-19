@@ -15,7 +15,7 @@ export default function App() {
     session, connected, userId, userName, code, socket,
     sendMessage, addProduct, removeProduct, requestAnalysis, requestRecommendation, vote,
     sendBrowsingUpdate, sendCursorUpdate, setSession,
-    activeQuiz, setActiveQuiz, submitRecommendationAnswers, isQuizLoading,
+    activeQuiz, setActiveQuiz, submitRecommendationAnswers, isQuizLoading, isBotThinking,
   } = useSocket();
 
   const { detectedProduct } = useProductDetector({
@@ -97,6 +97,7 @@ export default function App() {
         }}
         onQuizDismiss={() => setActiveQuiz(null)}
         isQuizLoading={isQuizLoading}
+        isBotThinking={isBotThinking}
         detectedProduct={detectedProduct}
         isAdded={isProductAdded}
         onAddProduct={handleAddProduct}

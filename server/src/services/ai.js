@@ -148,6 +148,10 @@ SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
   ]
 }`;
 
+    console.log('\n[AI] ═══ RECOMMENDATION QUESTIONS PROMPT ═══');
+    console.log(prompt);
+    console.log('[AI] ═══ END PROMPT ═══\n');
+
     return await generateJSON(prompt);
   } catch (e) {
     console.error('[AI] generateRecommendationQuestions error:', e.message);
@@ -210,6 +214,10 @@ GÖREVLERİN:
 3. İkinci en iyi alternatifi de belirt.
 4. Kısa, samimi, enerjik ve Türkçe yaz. Markdown formatını kullan. Emoji kullan ama abartma.
 5. Max 150 kelime.`;
+
+    console.log('\n[AI] ═══ FINAL RECOMMENDATION PROMPT ═══');
+    console.log(prompt);
+    console.log('[AI] ═══ END PROMPT ═══\n');
 
     return await generateText(prompt);
   } catch (e) {

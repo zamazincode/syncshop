@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Bot, Send } from 'lucide-react';
 import QuestionCard from './QuestionCard.jsx';
 
-export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading }) {
+export default function ChatPanel({ messages, userName, users = [], onSend, activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading, isBotThinking }) {
   const [text, setText] = useState('');
   const [mentions, setMentions] = useState([]);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -122,13 +122,15 @@ export default function ChatPanel({ messages, userName, users = [], onSend, acti
       </div>
 
       {/* Thinking Indicator */}
-      {isQuizLoading && !activeQuiz && (
+      {((isQuizLoading && !activeQuiz) || isBotThinking) && (
         <div className="mx-4 mb-3 animate-fade-in">
           <div className="flex flex-col items-start">
             <span className="text-[9px] font-medium text-white/40 uppercase tracking-widest mb-1.5 ml-1">SYNCBOT</span>
             <div className="bg-white/10 rounded-xl rounded-tl-sm border border-white/10 px-4 py-3 flex items-center gap-2">
               <Bot size={13} strokeWidth={1.25} className="text-white/50" />
-              <span className="text-[11px] text-white/50 font-light">Sorular hazırlanıyor</span>
+              <span className="text-[11px] text-white/50 font-light">
+                {isQuizLoading ? 'Ürünler analiz ediliyor' : 'Düşünüyor'}
+              </span>
               <span className="flex gap-0.5 ml-1">
                 <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

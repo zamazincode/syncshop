@@ -13,7 +13,7 @@ export default function Sidebar({
   code, users,
   session, userId, userName,
   onVote, onAnalyze, onSendMessage, onRemoveProduct, onRequestRecommendation,
-  activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading,
+  activeQuiz, onQuizComplete, onQuizDismiss, isQuizLoading, isBotThinking,
   connected,
   detectedProduct, isAdded, onAddProduct
 }) {
@@ -115,6 +115,7 @@ export default function Sidebar({
                 onQuizComplete={onQuizComplete}
                 onQuizDismiss={onQuizDismiss}
                 isQuizLoading={isQuizLoading}
+                isBotThinking={isBotThinking}
               />
             )}
           </div>
