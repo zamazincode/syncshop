@@ -20,12 +20,12 @@ export async function deleteSession(code) {
   onlineUsers.delete(code);
   productVotes.delete(code);
   emptySessionTimers.delete(code);
-  
+
   const { error } = await supabase
     .from('sessions')
     .delete()
     .eq('code', code);
-    
+
   if (error) {
     console.error(`[Session] Delete error for ${code}:`, error);
   }
@@ -194,13 +194,5 @@ export function isRoomActive(code) {
  */
 export function checkEmptySession(code) {
   if (!isRoomActive(code)) {
-    if (emptySessionTimers.has(code)) {
-      clearTimeout(emptySessionTimers.get(code));
-    }
-    console.log(`[Session] Room ${code} is empty. Starting 10-minute deletion timer...`);
-    const timer = setTimeout(() => {
-      deleteSession(code);
-    }, 10 * 60 * 1000); // 10 minutes
-    emptySessionTimers.set(code, timer);
   }
 }
